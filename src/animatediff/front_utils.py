@@ -222,7 +222,7 @@ def change_ip(enable):
     return ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio
 
 def select_v2v():
-    tab_select = gr.Textbox(lines=1, value='v2v', show_label=False)
+    tab_select = gr.Textbox(lines=1, value='V2V', show_label=False)
     btn = gr.Button("Generate V2V", scale=1)
     mask_grp = gr.Row(visible=True)
     i2i_grp = gr.Row(visible=True)
@@ -236,7 +236,7 @@ def select_v2v():
     return tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists
 
 def select_t2v():
-    tab_select = gr.Textbox(lines=1, value='t2v', show_label=False)
+    tab_select = gr.Textbox(lines=1, value='T2V', show_label=False)
     btn = gr.Button("Generate T2V", scale=1)
     mask_grp = gr.Row(visible=False)
     i2i_grp = gr.Row(visible=False)
@@ -483,7 +483,6 @@ def save_image_to_path(image, file_path):
                 os.makedirs(folder_path, exist_ok=True)
             
             # 保存前にフォルダ内のデータを削除
-            folder_path = os.path.dirname(file_path)
             if os.path.exists(folder_path):
                 for file_name in os.listdir(folder_path):
                     file_path_to_delete = os.path.join(folder_path, file_name)
@@ -537,6 +536,11 @@ def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str, ip_
                     "stride": 0
                 }
     actual_config_path = stylize_fg_dir/'prompt.json' if mask_ch else stylize_dir/'prompt.json'
+    
+    folder_path = os.path.dirname(actual_config_path)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path, exist_ok=True)
+    
     actual_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
     config_path.write_text(model_config.json(indent=4), encoding="utf-8")
 

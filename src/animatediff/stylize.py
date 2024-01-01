@@ -540,7 +540,7 @@ def generate(
 ):
     """Run video stylization"""
     from animatediff.cli import generate
-
+    
     singapore_timezone = pytz.timezone('Asia/Singapore')
     time_str = datetime.now(singapore_timezone).strftime("%Y-%m-%d_%H-%M")
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
@@ -613,7 +613,8 @@ def generate(
         tmp_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
         config_org = tmp_config_path
 
-
+    print(f"length_generate:{length}")
+    
     output_0_dir = generate(
         config_path=config_org,
         width=model_config.stylize_config["0"]["width"],

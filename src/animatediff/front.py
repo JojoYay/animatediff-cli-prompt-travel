@@ -131,6 +131,13 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                 bg_config = bg_config[len("/notebooks"):]
         print(f"video1: {video}")
     else:
+        mask_ch1 = False
+        ad_ch = False
+        dp_ch = False
+        me_ch = False
+        is_test = False
+        delete_if_exists = True        
+        
         video = None
         video_name = t_name
     try:
@@ -193,11 +200,12 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                 )
         update_config(now_str, video_name, mask_ch1, tab_select, ip_image)
         config = get_config_path(now_str)
-        model_config: ModelConfig = get_model_config(config)       
+        model_config: ModelConfig = get_model_config(config)
 
         yield 'generating fg bg video...', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
 
         print(f"Start: stylize generate {stylize_fg_dir}")
+        print(f"test: {is_test}")
         if is_test:
             # if mask_ch != "As is Base":
             if mask_ch1:
