@@ -254,6 +254,48 @@ def change_cn(enable):
     scale = gr.Slider(interactive=enable)
     return ch, scale
 
+def select_video(evt: gr.SelectData):
+    return evt.value[0] if evt.value is not None else None
+
+def pick_video(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video,
+                    front_video, front_refine, composite_video, final_video):
+    if final_video is not None:
+        return final_video
+    if composite_video is not None:
+        return composite_video
+    if front_refine is not None:
+        return front_refine
+    if front_video is not None:
+        return front_video
+    if original is not None:
+        return original
+    return None
+
+def generate_example(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video,
+                    front_video, front_refine, composite_video, final_video):
+
+    result = []
+    if original is not None:
+        result.append([original])
+    if mask_video is not None:
+        result.append([mask_video])
+    if depth_video is not None:
+        result.append([depth_video])
+    if lineart_video is not None:
+        result.append([lineart_video])
+    if openpose_video is not None:
+        result.append([openpose_video])
+    if media_face_video is not None:
+        result.append([media_face_video])
+    if front_video is not None:
+        result.append([front_video])
+    if front_refine is not None:
+        result.append([front_refine])
+    if composite_video is not None:
+        result.append([composite_video])
+    if final_video is not None:
+        result.append([final_video])
+    return result
 
 def create_config_by_gui(
     now_str:str,
