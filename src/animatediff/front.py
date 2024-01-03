@@ -4,7 +4,7 @@ from animatediff.front_utils import (get_schedulers, getNow, download_video, cre
                                     find_safetensor_files, find_last_folder_and_mp4_file, find_next_available_number,
                                     find_and_get_composite_video, load_video_name, get_last_sorted_subfolder,
                                     create_config_by_gui, get_config_path, update_config, change_ip, change_cn, get_first_sorted_subfolder, get_stylize_dir, get_fg_dir,
-                                    get_mask_dir, get_bg_dir, select_v2v, select_t2v, select_video, pick_video, generate_example)
+                                    get_mask_dir, get_bg_dir, select_v2v, select_t2v, select_video, pick_video, generate_example, change_re)
 from animatediff.settings import ModelConfig, get_model_config
 from animatediff.video_utils import create_video
 from animatediff.generate import save_output
@@ -40,7 +40,8 @@ def execute_wrapper(
       ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
       dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
       me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
-      delete_if_exists: bool, is_test: bool, is_refine: bool,
+      is_refine: bool, re_scale: float, re_interpo: float,
+      delete_if_exists: bool, is_test: bool, 
       progress=gr.Progress(track_tqdm=True)):
     # yield 'generation Initiated...', None, None, None, None, None, None, None, None, None, None, gr.Button("Generating...", scale=1, interactive=False)
     yield 'generation Initiated...', None, [], gr.Button("Generating...", scale=1, interactive=False)
@@ -115,7 +116,8 @@ def execute_wrapper(
         )
 
         yield from execute_impl(tab_select=tab_select, fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
-                                is_test=is_test, is_refine=is_refine, bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, 
+                                is_test=is_test, is_refine=is_refine, re_scale=re_scale, re_interpo=re_interpo, 
+                                bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, 
                                 mask_padding1=mask_padding1,is_low=low_vr, t_name=t_name, ip_image=ip_image)
     except Exception as inst:
         yield 'Runtime Error', None, [], gr.Button("Generate Video", scale=1, interactive=True)
@@ -128,7 +130,7 @@ def execute_wrapper(
     print(f"実行時間: {execution_time}秒")
 
     
-def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool, is_test: bool, is_refine: bool, 
+def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool, is_test: bool, is_refine: bool, re_scale:float, re_interpo:float,
                  bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int, is_low:bool, t_name:str, ip_image:PIL.Image.Image,):
     if tab_select == 'V2V':
         if video.startswith("/notebooks"):
@@ -288,9 +290,9 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
             if mask_ch1:
                 result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
                 print(f"Start: Refine {result_dir} -width {new_width}")
-                refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
+                refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width, tile_conditioning_scale=re_scale, interpolation_multiplier=re_interpo)
+                # tile_upscale(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
                 # !animatediff refine {result_dir} -o {stylize_fg_dir} -c {config} -W {new_width}
-                # front_video = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
                 front_refine = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
                 print(f"front_video: {front_video}")
                 fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
@@ -303,7 +305,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
             else:
                 result_dir = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
                 print(f"Start: Refine {result_dir} -width {new_width}")
-                refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width)
+                refine(frames_dir=result_dir, out_dir=stylize_fg_dir, config_path=config, width=new_width, tile_conditioning_scale=re_scale, interpolation_multiplier=re_interpo)
                 # !animatediff refine {result_dir} -o {stylize_dir} -c {config} -W {new_width}
                 print(f"front_video: {front_video}")
                 fg_result = get_last_sorted_subfolder(get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir)))
@@ -315,7 +317,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
             # if mask_ch != "As is Base":
                 fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
                 # if mask_ch == 'Nothing Base':
-                if mask_type == 'Nothing Base': 
+                if mask_type == 'No Background': 
                     semi_final_video = find_last_folder_and_mp4_file(stylize_fg_dir)
             else:
                 fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
@@ -437,8 +439,8 @@ def launch():
                     with gr.Group():
                         with gr.Row():
                             seed = gr.Number(value=-1, label="Seed")
-                            inp_step = gr.Slider(minimum=1, maximum=50, step=1, value=10, label="Sampling Steps")
-                            inp_cfg = gr.Slider(minimum=0.1, maximum=20, step=0.05,  value=2.4, label="CFG Scale")
+                            inp_step = gr.Slider(minimum=1, maximum=50, step=1, value=8, label="Sampling Steps")
+                            inp_cfg = gr.Slider(minimum=0.1, maximum=20, step=0.05,  value=1.8, label="CFG Scale")
                     with gr.Group():
                         with gr.Row():
                             single_prompt = gr.Checkbox(label="Single Prompt Mode", value=False, visible=False)
@@ -494,10 +496,10 @@ def launch():
                             i2i_scale = gr.Slider(minimum=0.05, maximum=5,  step=0.05, value=0.7, label="Denoising Strength")
                         with gr.Row() as ad_grp:
                             ad_ch = gr.Checkbox(label="AimateDiff Controlnet", value=True)
-                            ad_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="AnimateDiff Controlnet Weight")
+                            ad_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.25, label="AnimateDiff Controlnet Weight")
                         with gr.Row() as op_grp:
                             op_ch = gr.Checkbox(label="Open Pose", value=True)
-                            op_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="Open Pose Weight")
+                            op_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.9, label="Open Pose Weight")
                         with gr.Row() as dp_grp:
                             dp_ch = gr.Checkbox(label="Depth", value=False)
                             dp_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="Depth Weight", interactive=False)
@@ -506,13 +508,17 @@ def launch():
                             la_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="Lineart Weight", interactive=False)
                         with gr.Row() as me_grp:
                             me_ch = gr.Checkbox(label="Mediapipe Face", value=False)
-                            me_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=1.0, label="Mediapipe Face Weight ", interactive=False)
-
+                            me_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="Mediapipe Face Weight", interactive=False)
+                        with gr.Row() as refine_grp:
+                            refine = gr.Checkbox(label="Refine", value=False)
+                            re_scale = gr.Slider(minimum=0.05, maximum=2,  step=0.05, value=0.75, label="Tile-upscale", interactive=False)
+                            re_interpo = gr.Slider(minimum=1, maximum=3,  step=1, value=1, label="Interporation Mulitiplier", visible=False, interactive=False)
+                            
                  #   inp2 = gr.Dropdown(choices=result_list, info="please select", label="Config")
                     with gr.Row():
                         delete_if_exists = gr.Checkbox(label="Delete cache")
                         test_run = gr.Checkbox(label="Test Run", value=True)
-                        refine = gr.Checkbox(label="Refine")
+                        
                     
 
             with gr.Column():
@@ -556,7 +562,8 @@ def launch():
                           ad_ch, ad_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
                           me_ch, me_scale, i2i_ch, i2i_scale,
-                          delete_if_exists, test_run, refine],
+                          refine, re_scale, re_interpo,
+                          delete_if_exists, test_run],
                   outputs=[o_status, output, data_sets, btn])
 
                   # outputs=[o_status, o_original, o_mask, o_lineart, o_depth, o_openpose, o_mediaface, o_front, o_front_refine, o_composite, o_final, btn])
@@ -567,6 +574,7 @@ def launch():
         dp_ch.change(fn=change_cn, inputs=[dp_ch], outputs=[dp_ch, dp_scale])
         la_ch.change(fn=change_cn, inputs=[la_ch], outputs=[la_ch, la_scale])
         me_ch.change(fn=change_cn, inputs=[me_ch], outputs=[me_ch, me_scale])
+        refine.change(fn=change_re, inputs=[refine], outputs=[refine, re_scale, re_interpo])
         i2i_ch.change(fn=change_cn, inputs=[i2i_ch], outputs=[i2i_ch, i2i_scale])
         v2v_tab.select(fn=select_v2v, outputs=[tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
         t2v_tab.select(fn=select_t2v, outputs=[tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])

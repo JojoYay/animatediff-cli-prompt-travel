@@ -221,6 +221,12 @@ def change_ip(enable):
     ip_image_ratio = gr.Slider(interactive=enable)
     return ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio
 
+def change_re(enable):
+    refine = gr.Checkbox(value=enable)
+    re_scale = gr.Slider(interactive=enable)
+    re_interpo = gr.Slider(interactive=enable)
+    return refine, re_scale, re_interpo
+    
 def select_v2v():
     tab_select = gr.Textbox(lines=1, value='V2V', show_label=False)
     btn = gr.Button("Generate V2V", scale=1)
