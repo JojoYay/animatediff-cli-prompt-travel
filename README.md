@@ -118,38 +118,6 @@ below is just a copy from AnimateDiff-prompt-travel
 <br>
 <br>
 
-
-### Installation(for windows)
-Same as the original animatediff-cli  
-[Python 3.10](https://www.python.org/) and git client must be installed  
-
-```sh
-git clone https://github.com/s9roll7/animatediff-cli-prompt-travel.git
-cd animatediff-cli-prompt-travel
-py -3.10 -m venv venv
-venv\Scripts\activate.bat
-set PYTHONUTF8=1
-python -m pip install --upgrade pip
-# Torch installation must be modified to suit the environment. (https://pytorch.org/get-started/locally/)
-python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-python -m pip install -e .
-
-# If you want to use the 'stylize' command, you will also need
-python -m pip install -e .[stylize]
-
-# If you want to use use dwpose as a preprocessor for controlnet_openpose, you will also need
-python -m pip install -e .[dwpose]
-# (DWPose is a more powerful version of Openpose)
-
-# If you want to use the 'stylize create-mask' and 'stylize composite' command, you will also need
-python -m pip install -e .[stylize_mask]
-```
-(https://www.reddit.com/r/StableDiffusion/comments/157c0wl/working_animatediff_cli_windows_install/)  
-  
-I found a detailed tutorial  
-(https://www.reddit.com/r/StableDiffusion/comments/16vlk9j/guide_to_creating_videos_with/)  
-(https://www.youtube.com/watch?v=7_hh3wOD81s)  
-
 ### How To Use
 Almost same as the original animatediff-cli, but with a slight change in config format.
 ```json
