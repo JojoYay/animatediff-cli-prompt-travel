@@ -446,7 +446,7 @@ def launch():
                         with gr.Row():
                             single_prompt = gr.Checkbox(label="Single Prompt Mode", value=False, visible=False)
                             prompt_fixed_ratio = gr.Slider(minimum=0, maximum=1, step=0.1, value=0.5, label="Prompt Fixed Ratio")
-                            tensor_interpolation_slerp = gr.Checkbox(label="tensor_interpolation_slerp", value=True, visible=True)
+                            tensor_interpolation_slerp = gr.Checkbox(label="tensor_interpolation_slerp", value=True, visible=False)
                     inp_posi = gr.Textbox(lines=2, value="1girl, beautiful", placeholder="1girl, beautiful", label="Positive Prompt")
                     with gr.Accordion("Prompt Map", open=False):
                         inp_pro_map = gr.Textbox(lines=3, value='"0": "best quality",', show_label=False)
