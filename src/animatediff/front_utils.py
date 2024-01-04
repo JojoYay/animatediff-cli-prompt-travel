@@ -311,7 +311,7 @@ def create_config_by_gui(
     motion_module: str, context:str, scheduler: str, 
     is_lcm: bool, is_hires: bool,
     step: int, cfg: float, seed:int,
-    single_prompt: bool, prompt_fixed_ratio: float,
+    single_prompt: bool, prompt_fixed_ratio: float, tensor_interpolation_slerp:bool,
     head_prompt:str, inp_pro_map:str, neg_prompt:str,
     inp_lora1: str, inp_lora1_step: float,
     inp_lora2: str, inp_lora2_step: float,
@@ -347,6 +347,7 @@ def create_config_by_gui(
     print(f"Seed: {seed}")
     print(f"is_single_prompt_mode: {single_prompt}")
     print(f"prompt_fixed_ratio: {prompt_fixed_ratio}")
+    print(f"tensor_interpolation_slerp: {tensor_interpolation_slerp}")
     print(f"head_prompt: {head_prompt}")
     print(f"prompt_map: {inp_pro_map}")
     print(f"neg_prompt: {neg_prompt}")
@@ -393,6 +394,7 @@ def create_config_by_gui(
     model_config.vae_path = vae if vae is not None else ""
     model_config.context_schedule = context
     model_config.steps = step
+    model_config.tensor_interpolation_slerp = tensor_interpolation_slerp
     model_config.guidance_scale = cfg
     model_config.scheduler = scheduler
     model_config.is_single_prompt_mode = single_prompt

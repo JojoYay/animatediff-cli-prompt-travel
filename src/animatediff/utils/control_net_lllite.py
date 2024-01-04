@@ -203,7 +203,11 @@ class LLLiteModule(torch.nn.Module):
         # 加算ではなくchannel方向に結合することで、うまいこと混ぜてくれることを期待している
         # down reduces the number of input dimensions and combines it with conditioning image embedding
         # we expect that it will mix well by combining in the channel direction instead of adding
-
+        print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+        print("cx size:", cx.size())
+        print("self.down size:", self.down(x if not self.batch_cond_only else x[1::2]).size())
+        
+        
         cx = torch.cat([cx, self.down(x if not self.batch_cond_only else x[1::2])], dim=1 if self.is_conv2d else 2)
         cx = self.mid(cx)
 
