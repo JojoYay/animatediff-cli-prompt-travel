@@ -4,7 +4,7 @@ from animatediff.front_utils import (get_schedulers, getNow, download_video, cre
                                     find_safetensor_files, find_last_folder_and_mp4_file, find_next_available_number,
                                     find_and_get_composite_video, load_video_name, get_last_sorted_subfolder,
                                     create_config_by_gui, get_config_path, update_config, change_ip, change_cn, get_first_sorted_subfolder, get_stylize_dir, get_fg_dir,
-                                    get_mask_dir, get_bg_dir, select_v2v, select_t2v, select_video, pick_video, generate_example, change_re)
+                                    get_mask_dir, get_bg_dir, select_v2v, select_t2v, select_data, select_url, select_video, pick_video, generate_example, change_re, find_mp4_files)
 from animatediff.settings import ModelConfig, get_model_config
 from animatediff.video_utils import create_video
 from animatediff.generate import save_output
@@ -22,7 +22,7 @@ import shutil
 
 # Define the function signature
 def execute_wrapper(
-      tab_select:str, url: str, t_name: str, t_length:int, t_width:int, t_height:int, fps: int,
+      tab_select:str, tab_select2:str, url: str, dl_video: str, t_name: str, t_length:int, t_width:int, t_height:int, fps: int,
       inp_model: str, inp_vae: str, 
       inp_mm: str, inp_context: str, inp_sche: str, 
       inp_lcm: bool, inp_hires: bool, low_vr: bool,
@@ -48,9 +48,13 @@ def execute_wrapper(
     start_time = time.time()
     time_str = getNow()
     try:
-        if url is None and tab_select == 'V2V':
+        if url is None and tab_select == 'V2V' and tab_select2 == 'URL':
             yield 'Error: URL is required.', None, None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
             # yield 'Error: URL is required.', None, [], gr.Button("Generate Video", scale=1, interactive=True) #キャプションをちゃんと更新(TODO)
+            return
+        if dl_video is None and tab_select == 'V2V' and tab_select2 == 'Data':
+            yield 'Error: Select Video', None, None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
+            # yield 'Error: URL is required.', None, [], gr.Button("Generate Video", scale=1, interactive=True)
             return
         if inp_model == []:
             yield 'Error: Select Model', None, None, None, None, None, None, None, None, None, None, gr.Button("Generate Video", scale=1, interactive=True)
@@ -79,12 +83,15 @@ def execute_wrapper(
         
         bg_config = None
         if tab_select == 'V2V':
-            save_folder = Path('data/video')
-            saved_file = download_video(url, save_folder)
-        
+            if tab_select2 == 'URL':
+                save_folder = Path('data/video')
+                saved_file = download_video(url, save_folder)
+
+            else: #tab_select2 == "Data"
+                saved_file = 'data/'+dl_video
+                
             separator = os.path.sep
             video_name = os.path.splitext(os.path.normpath(saved_file.replace('/notebooks', separator)))[0].rsplit(separator, 1)[-1]
-        
         else:
             video_name = t_name
             saved_file = None
@@ -196,8 +203,9 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                 create_config(org_movie=video, fps=fps, low_vram=is_low)
                 # !animatediff stylize create-config {video} -f {fps}
 
-        if not stylize_fg_dir.exists() and mask_ch1:
-            create_mask(stylize_dir=stylize_dir, bg_confing=bg_config, no_crop=True, low_vram=is_low)
+        # if not stylize_fg_dir.exists() and mask_ch1:
+        if not mask_dir.exists() and mask_ch1:
+            create_mask(stylize_dir=stylize_dir, bg_config=bg_config, no_crop=True, low_vram=is_low)
             # !animatediff stylize create-mask {stylize_dir} -mp {mask_padding} -nc　
             if mask_ch1:
                 mask_video = mask_dir/'mask.mp4'
@@ -396,6 +404,7 @@ def launch():
     mask_type_choice = ["Original", "No Background"]
     context_choice = ["uniform", "composite"]
     vae_choice = find_safetensor_files("data/vae")
+    video_files = find_mp4_files("data/video")
     
     with gr.Blocks() as iface:
         with gr.Row():
@@ -405,12 +414,13 @@ def launch():
                 """, scale=8)
             btn = gr.Button("Generate V2V", scale=1)
             tab_select = gr.Textbox(lines=1, value="V2V", show_label=False, visible=False)
+            tab_select2 = gr.Textbox(lines=1, value="Data", show_label=False, visible=False)
         with gr.Row():
             with gr.Column():
                 with gr.Tab("V2V") as v2v_tab:
-                    # with gr.Tab("Data"):
-                    #     url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", label="URL")
-                    with gr.Tab("URL"):
+                    with gr.Tab("Existing Video") as data_tab:
+                        dl_video = gr.Dropdown(choices=video_files, label="Videos")
+                    with gr.Tab("Download from URL") as url_tab:
                         url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", show_label=False)
                 with gr.Tab("T2V") as t2v_tab:
                     with gr.Group():
@@ -523,7 +533,7 @@ def launch():
         with gr.Row():
             # with gr.Column():
             with gr.Group():
-                o_status = gr.Label(value="Not Started Yet", label="Status", scale=4)
+                o_status = gr.Label(value="Not Started Yet", label="Status", scale=5)
                 # output=gr.Video(container=True)
                 with gr.Row():
                 # data_sets=gr.Dataset(components=[output], samples=[], label="Result Videos")
@@ -535,6 +545,7 @@ def launch():
                     o_openpose = gr.Video(width=128, label="Open Pose", scale=1)
                     o_depth = gr.Video(width=128, label="Depth", scale=1)
                     o_lineart = gr.Video(width=128, label="Line Art", scale=1)
+                with gr.Row():
                     o_mediaface = gr.Video(width=128, label="Mediapipe Face", scale=1)
                     o_front = gr.Video(width=128, label="Front Video", scale=1)
                     o_front_refine = gr.Video(width=128, label="Front Video (Refined)", scale=1)
@@ -542,7 +553,7 @@ def launch():
                     o_final = gr.Video(width=128, label="Generated Video", scale=1)             
 
         btn.click(fn=execute_wrapper,
-                  inputs=[tab_select, url, t_name, t_length, t_width, t_height, fps,
+                  inputs=[tab_select, tab_select2, url, dl_video, t_name, t_length, t_width, t_height, fps,
                           inp_model, inp_vae, 
                           inp_mm, inp_context, inp_sche, 
                           inp_lcm, inp_hires, low_vr,
@@ -576,6 +587,10 @@ def launch():
         i2i_ch.change(fn=change_cn, inputs=[i2i_ch], outputs=[i2i_ch, i2i_scale])
         v2v_tab.select(fn=select_v2v, outputs=[tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
         t2v_tab.select(fn=select_t2v, outputs=[tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
+
+        data_tab.select(fn=select_data, outputs=[tab_select2])
+        url_tab.select(fn=select_url, outputs=[tab_select2])
+
         # data_sets.select(fn=select_video, outputs=[output])
         
     iface.queue()

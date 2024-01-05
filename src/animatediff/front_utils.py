@@ -73,6 +73,33 @@ def get_bg_dir(video_name:str) -> Path:
     bg_folder_name = 'bg_' + video_name
     return get_stylize_dir(video_name) / bg_folder_name
 
+def find_mp4_files(folder, suffix=''):
+    result_list = []
+
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            if file.endswith(".mp4"):
+                file_path = os.path.join(root, file)
+                folder_name = os.path.relpath(root, folder)
+                file_name = os.path.splitext(file)[0]
+                
+                if folder_name != ".":
+                    file_name = os.path.join(folder_name, file_name)
+                
+                result_name = f"{suffix}{file_name}"
+                result_path = os.path.relpath(file_path, folder)
+                if folder.startswith("data/"):
+                    folder2 = folder[len("data/"):]
+                result_list.append((result_name, folder2+'/'+result_path))
+
+        for subdir in dirs:
+            subdir_path = os.path.join(root, subdir)
+            subdir_suffix = f"{suffix}{subdir}/" if suffix else f"{subdir}/"
+            result_list.extend(find_safetensor_files(subdir_path, subdir_suffix))
+            
+    result_list.sort(key=lambda x: x[0])  # file_name でソート
+    return result_list    
+
 def find_safetensor_files(folder, suffix=''):
     result_list = []
 
@@ -254,6 +281,14 @@ def select_t2v():
     delete_if_exists = gr.Checkbox(visible=False)
     test_run = gr.Checkbox(visible=False)
     return tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists
+
+def select_data():
+    tab_select = gr.Textbox(lines=1, value='Data', show_label=False)
+    return tab_select
+
+def select_url():
+    tab_select = gr.Textbox(lines=1, value='URL', show_label=False)
+    return tab_select
 
 def change_cn(enable):
     ch = gr.Checkbox(value=enable)
