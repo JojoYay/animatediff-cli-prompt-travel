@@ -97,7 +97,7 @@ def execute_wrapper(
             saved_file = None
         
         # video_name=saved_file.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
-        stylize_dir= get_stylize_dir(video_name)
+        stylize_dir= get_stylize_dir(video_name, str(fps))
         create_config_by_gui(
             now_str=time_str,
             video = saved_file,
@@ -178,10 +178,11 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
 
             # video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
             video = Path(video).resolve()
-        stylize_dir = get_stylize_dir(video_name)
-        stylize_fg_dir = get_fg_dir(video_name)
-        mask_dir = get_mask_dir(video_name)
-        stylize_bg_dir = get_bg_dir(video_name)
+        str_fps = str(fps)
+        stylize_dir = get_stylize_dir(video_name, str_fps)
+        stylize_fg_dir = get_fg_dir(video_name, str_fps)
+        mask_dir = get_mask_dir(video_name, str_fps)
+        stylize_bg_dir = get_bg_dir(video_name, str_fps)
 
         print(f"stylize_dir:{stylize_dir}")
         print(f"stylize_fg_dir:{stylize_fg_dir}")
@@ -218,7 +219,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                     False,
                     None,
                 )
-        update_config(now_str, video_name, mask_ch1, tab_select, ip_image)
+        update_config(now_str, video_name, mask_ch1, tab_select, ip_image, str_fps)
         config = get_config_path(now_str)
         model_config: ModelConfig = get_model_config(config)
 

@@ -58,20 +58,20 @@ def create_file_list(folder_path):
             file_list.append(file_name)
     return file_list
 
-def get_stylize_dir(video_name:str)-> Path:
-    stylize_dir='stylize/' + video_name
+def get_stylize_dir(video_name:str, fps:str)-> Path:
+    stylize_dir='stylize/' + video_name + "_fps" + fps
     return Path(stylize_dir)
 
-def get_fg_dir(video_name:str) -> Path:
+def get_fg_dir(video_name:str, fps:str) -> Path:
     fg_folder_name = 'fg_00_'+video_name
-    return get_stylize_dir(video_name) / fg_folder_name
+    return get_stylize_dir(video_name, fps) / fg_folder_name
 
-def get_mask_dir(video_name:str) -> Path:
-    return get_fg_dir(video_name) / '00_mask'
+def get_mask_dir(video_name:str, fps:str) -> Path:
+    return get_fg_dir(video_name, fps) / '00_mask'
 
-def get_bg_dir(video_name:str) -> Path:
+def get_bg_dir(video_name:str, fps:str) -> Path:
     bg_folder_name = 'bg_' + video_name
-    return get_stylize_dir(video_name) / bg_folder_name
+    return get_stylize_dir(video_name, fps) / bg_folder_name
 
 def find_mp4_files(folder, suffix=''):
     result_list = []
@@ -439,6 +439,7 @@ def create_config_by_gui(
     model_config.prompt_map = data_dict
     model_config.n_prompt = [neg_prompt]
     model_config.seed = [seed]
+    model_config.output["fps"] = fps
     model_config.lcm_map = {
         "enable": is_lcm,
         "start_scale": 0.15,
@@ -484,7 +485,7 @@ def create_config_by_gui(
                 "stride": 0
             }
         }
-    model_config.output= {
+    model_config.output = {
         "format": "mp4",
         "fps": fps,
         "encode_param": {
@@ -590,11 +591,11 @@ def get_config_path(now_str:str) -> Path:
     config_path = config_dir.joinpath(now_str+".json")
     return config_path
     
-def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str, ip_image:PIL.Image.Image):
+def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str, ip_image:PIL.Image.Image, fps:str):
     config_path = get_config_path(now_str)
     model_config: ModelConfig = get_model_config(config_path)
-    stylize_dir = get_stylize_dir(video_name)
-    stylize_fg_dir = get_fg_dir(video_name)
+    stylize_dir = get_stylize_dir(video_name, fps)
+    stylize_fg_dir = get_fg_dir(video_name, fps)
     save_image_to_path(ip_image, stylize_dir/'00_ipadapter'/'0.png')
 
     if tab_select=='V2V':

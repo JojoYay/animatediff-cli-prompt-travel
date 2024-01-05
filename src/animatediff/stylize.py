@@ -252,12 +252,12 @@ def create_config(
     # get a timestamp for the output directory
 #    time_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
 #    time_str = "jjj"
-    time_str = model_config.name
+    time_str = model_config.name + '_fps' + str(fps)
     # make the output directory
 #    save_dir = out_dir.joinpath(f"{time_str}-{model_config.save_name}")
     org_movie = Path(org_movie)
 #    save_dir = out_dir.joinpath(f"{time_str}-{org_movie.stem}")
-    save_dir = out_dir.joinpath(f"{org_movie.stem}")
+    save_dir = out_dir.joinpath(org_movie.stem + '_fps' + str(fps))
     save_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Will save outputs to ./{path_from_cwd(save_dir)}")
 
