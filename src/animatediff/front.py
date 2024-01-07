@@ -3,7 +3,7 @@ from animatediff.execute import execute
 from animatediff.front_utils import (get_schedulers, getNow, download_video, create_file_list,
                                     find_safetensor_files, find_last_folder_and_mp4_file, find_next_available_number,
                                     find_and_get_composite_video, load_video_name, get_last_sorted_subfolder,
-                                    create_config_by_gui, get_config_path, update_config, change_ip, change_cn, get_first_sorted_subfolder, get_stylize_dir, get_fg_dir,
+                                    create_config_by_gui, get_config_path, update_config, change_ip, change_cn, change_ref, get_first_sorted_subfolder, get_stylize_dir, get_fg_dir,
                                     get_mask_dir, get_bg_dir, select_v2v, select_t2v, select_data, select_url, select_video, pick_video, generate_example, change_re, find_mp4_files)
 from animatediff.settings import ModelConfig, get_model_config
 from animatediff.video_utils import create_video
@@ -40,6 +40,7 @@ def execute_wrapper(
       ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
       dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
       me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
+      ref_ch: bool, ref_image: PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
       is_refine: bool, re_scale: float, re_interpo: float,
       delete_if_exists: bool, is_test: bool, 
       progress=gr.Progress(track_tqdm=True)):
@@ -52,7 +53,7 @@ def execute_wrapper(
             yield 'Error: URL is required.', None, None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
             # yield 'Error: URL is required.', None, [], gr.Button("Generate Video", scale=1, interactive=True) #キャプションをちゃんと更新(TODO)
             return
-        if dl_video is None and tab_select == 'V2V' and tab_select2 == 'Data':
+        if dl_video == [] and tab_select == 'V2V' and tab_select2 == 'Data':
             yield 'Error: Select Video', None, None, None, None, None, None, None, None,None, None, gr.Button("Generate Video", scale=1, interactive=True)
             # yield 'Error: URL is required.', None, [], gr.Button("Generate Video", scale=1, interactive=True)
             return
@@ -119,13 +120,14 @@ def execute_wrapper(
             ad_ch=ad_ch, ad_scale=ad_scale, op_ch=op_ch, op_scale=op_scale,
             dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
             me_ch=me_ch, me_scale=me_scale, i2i_ch=i2i_ch, i2i_scale=i2i_scale,
+            ref_ch=ref_ch, ref_image=ref_image, ref_attention=ref_attention, ref_gn=ref_gn, ref_weight=ref_weight,
             tab_select=tab_select, t_name=t_name, t_length=t_length, t_width=t_width, t_height=t_height
         )
 
         yield from execute_impl(tab_select=tab_select, fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
                                 is_test=is_test, is_refine=is_refine, re_scale=re_scale, re_interpo=re_interpo, 
                                 bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, 
-                                mask_padding1=mask_padding1,is_low=low_vr, t_name=t_name, ip_image=ip_image)
+                                mask_padding1=mask_padding1, is_low=low_vr, t_name=t_name, ip_image=ip_image, ref_image=ref_image)
     except Exception as inst:
         # yield 'Runtime Error', None, [], gr.Button("Generate Video", scale=1, interactive=True)
         yield 'Runtime Error', None, None, None, None, None, None, None, None, None, None, gr.Button("Generating...", scale=1, interactive=True)
@@ -139,7 +141,7 @@ def execute_wrapper(
 
     
 def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool, is_test: bool, is_refine: bool, re_scale:float, re_interpo:float,
-                 bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int, is_low:bool, t_name:str, ip_image:PIL.Image.Image,):
+                 bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int, is_low:bool, t_name:str, ip_image:PIL.Image.Image, ref_image:PIL.Image.Image,):
     if tab_select == 'V2V':
         if video.startswith("/notebooks"):
             video = video[len("/notebooks"):]
@@ -219,7 +221,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                     False,
                     None,
                 )
-        update_config(now_str, video_name, mask_ch1, tab_select, ip_image, str_fps)
+        update_config(now_str, video_name, mask_ch1, tab_select, ip_image, ref_image, str_fps)
         config = get_config_path(now_str)
         model_config: ModelConfig = get_model_config(config)
 
@@ -268,7 +270,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
         for cn_folder in subfolders:
             # フォルダ名が "animate_diff" でない場合の処理
             print(f"cn_folder: {cn_folder}")
-            if os.path.basename(cn_folder) != "animatediff_controlnet":
+            if os.path.basename(cn_folder) != "animatediff_controlnet" and os.path.basename(cn_folder) != "controlnet_ref":
                 filename = Path(cn_folder + '/' + os.path.basename(cn_folder)+'.mp4')
                 save_output(
                     None,
@@ -491,11 +493,20 @@ def launch():
                     with gr.Accordion("Special Effects", open=True):
                         ip_ch = gr.Checkbox(label="IPAdapter", value=False)
                         with gr.Row():
-                            ip_image = gr.Image(height=256, type="pil", interactive=False)
+                            ip_image = gr.Image(height=128, type="pil", interactive=False)
                             with gr.Column():
                                 ip_scale = gr.Slider(minimum=0, maximum=2, step=0.1, value=1.0, label="scale", interactive=False)
                                 ip_image_ratio = gr.Slider(minimum=0, maximum=1, step=0.1, value=0.8, label="Image Fixed Ratio", interactive=False)
                                 ip_type = gr.Radio(choices=ip_choice, label="Type", value="plus_face", interactive=False)
+
+                        ref_ch = gr.Checkbox(label="Ref Only", value=False)
+                        with gr.Row() as ref_grp:
+                            ref_image = gr.Image(height=128, type="pil", interactive=False)
+                            with gr.Column():
+                                ref_attention = gr.Slider(minimum=0, maximum=1, step=0.1, value=1.0, label="attention auto machine weight", interactive=False)
+                                ref_gn = gr.Slider(minimum=0, maximum=1, step=0.1, value=1.0, label="gn auto machine weight", interactive=False)
+                                ref_weight = gr.Slider(minimum=0, maximum=1, step=0.1, value=1.0, label="Ref Only Weight", interactive=False)
+                                
                         with gr.Row() as mask_grp:
                             with gr.Column():
                                 with gr.Group():
@@ -538,9 +549,7 @@ def launch():
                 # output=gr.Video(container=True)
                 with gr.Row():
                 # data_sets=gr.Dataset(components=[output], samples=[], label="Result Videos")
-
                     # examples = gr.Examples(examples=video_paths, inputs=input_hidden, outputs=output, cache_examples=False)
-
                     o_original = gr.Video(width=128, label="Original Video", scale=1)
                     o_mask = gr.Video(width=128, label="Mask", scale=1)
                     o_openpose = gr.Video(width=128, label="Open Pose", scale=1)
@@ -572,6 +581,7 @@ def launch():
                           ad_ch, ad_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
                           me_ch, me_scale, i2i_ch, i2i_scale,
+                          ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
                           refine, re_scale, re_interpo,
                           delete_if_exists, test_run],
                   # outputs=[o_status, output, data_sets, btn])
@@ -586,6 +596,7 @@ def launch():
         me_ch.change(fn=change_cn, inputs=[me_ch], outputs=[me_ch, me_scale])
         refine.change(fn=change_re, inputs=[refine], outputs=[refine, re_scale, re_interpo])
         i2i_ch.change(fn=change_cn, inputs=[i2i_ch], outputs=[i2i_ch, i2i_scale])
+        ref_ch.change(fn=change_ref, inputs=[ref_ch], outputs=[ref_ch, ref_image, ref_attention, ref_gn, ref_weight])
         v2v_tab.select(fn=select_v2v, outputs=[tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
         t2v_tab.select(fn=select_t2v, outputs=[tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
 

@@ -242,11 +242,19 @@ def get_first_sorted_subfolder(base_folder):
 
 def change_ip(enable):
     ip_ch= gr.Checkbox(value=enable)
-    ip_image = gr.UploadButton(interactive=enable)
+    ip_image = gr.Image(interactive=enable)
     ip_scale = gr.Slider(interactive=enable)
     ip_type = gr.Radio(interactive=enable)
     ip_image_ratio = gr.Slider(interactive=enable)
     return ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio
+
+def change_ref(enable):
+    ref_ch= gr.Checkbox(value=enable)
+    ref_image = gr.Image(interactive=enable)
+    ref_attention = gr.Slider(interactive=enable)
+    ref_gn = gr.Slider(interactive=enable)
+    ref_weight = gr.Slider(interactive=enable)
+    return ref_ch, ref_image, ref_attention, ref_gn, ref_weight
 
 def change_re(enable):
     refine = gr.Checkbox(value=enable)
@@ -357,8 +365,9 @@ def create_config_by_gui(
     mask_target:str,
     ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str,ip_image_ratio:float,
     ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
-    dp_ch: bool, dp_scale:float, la_ch: bool, la_scale: float,
-    me_ch: bool, me_scale:float, i2i_ch: bool, i2i_scale:float,
+    dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
+    me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
+    ref_ch: bool, ref_image:  PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
     tab_select:str, t_name: str, t_length:int, t_width:int, t_height:int
 ) -> Path:
     data_dir = get_dir("data")
@@ -415,13 +424,16 @@ def create_config_by_gui(
     print(f"me_scale: {me_scale}")
     print(f"i2i_ch: {i2i_ch}")
     print(f"i2i_scale: {i2i_scale}")
+    print(f"ref_ch: {ref_ch}")
+    print(f"ref_image: {ref_image}")
+    print(f"ref_attention: {ref_attention}")
+    print(f"ref_gn: {ref_gn}")
+    print(f"ref_weight: {ref_weight}")
     print(f"tab_select: {tab_select}")
     print(f"t_name: {t_name}")
     print(f"t_length: {t_length}")
     print(f"t_width: {t_width}")
     print(f"t_height: {t_height}")
-
-    print(type(ip_image))
     
     model_config.name = now_str
     model_config.path = Path(model)
@@ -557,28 +569,48 @@ def create_config_by_gui(
     model_config.controlnet_map["controlnet_lineart"]["controlnet_conditioning_scale"] = la_scale
     model_config.controlnet_map["controlnet_mediapipe_face"]["enable"] = me_ch
     model_config.controlnet_map["controlnet_mediapipe_face"]["controlnet_conditioning_scale"] = me_scale
+
+    model_config.controlnet_map["controlnet_ref"]["enable"] = ref_ch
+    model_config.controlnet_map["controlnet_ref"]["ref_image"] = Path("..") / stylize_dir/'00_refonly'/'0.png'
+    model_config.controlnet_map["controlnet_ref"]["attention_auto_machine_weight"] = ref_attention
+    model_config.controlnet_map["controlnet_ref"]["gn_auto_machine_weight"] = ref_gn
+    model_config.controlnet_map["controlnet_ref"]["style_fidelity"] = ref_weight
+    if ref_ch:
+        model_config.unet_batch_size = 2
+    else:
+        model_config.unet_batch_size = 1
     
     save_config_path = get_config_path(now_str)
     save_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
 
 def save_image_to_path(image, file_path):
+    folder_path = os.path.dirname(file_path)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path, exist_ok=True)
+    if os.path.exists(folder_path):
+        for file_name in os.listdir(folder_path):
+            file_path_to_delete = os.path.join(folder_path, file_name)
+            try:
+                if os.path.isfile(file_path_to_delete):
+                    os.unlink(file_path_to_delete)
+                elif os.path.isdir(file_path_to_delete):
+                    os.rmdir(file_path_to_delete)
+            except Exception as e:
+                print(f"Failed to delete {file_path_to_delete}: {e}")
+    
     if image is not None:
         try:
-            folder_path = os.path.dirname(file_path)
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path, exist_ok=True)
-            
-            # 保存前にフォルダ内のデータを削除
-            if os.path.exists(folder_path):
-                for file_name in os.listdir(folder_path):
-                    file_path_to_delete = os.path.join(folder_path, file_name)
-                    try:
-                        if os.path.isfile(file_path_to_delete):
-                            os.unlink(file_path_to_delete)
-                        elif os.path.isdir(file_path_to_delete):
-                            os.rmdir(file_path_to_delete)
-                    except Exception as e:
-                        print(f"Failed to delete {file_path_to_delete}: {e}")
+            # # 保存前にフォルダ内のデータを削除
+            # if os.path.exists(folder_path):
+            #     for file_name in os.listdir(folder_path):
+            #         file_path_to_delete = os.path.join(folder_path, file_name)
+            #         try:
+            #             if os.path.isfile(file_path_to_delete):
+            #                 os.unlink(file_path_to_delete)
+            #             elif os.path.isdir(file_path_to_delete):
+            #                 os.rmdir(file_path_to_delete)
+            #         except Exception as e:
+            #             print(f"Failed to delete {file_path_to_delete}: {e}")
 
             # イメージを指定したパスに保存
             image.save(file_path)
@@ -591,13 +623,14 @@ def get_config_path(now_str:str) -> Path:
     config_path = config_dir.joinpath(now_str+".json")
     return config_path
     
-def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str, ip_image:PIL.Image.Image, fps:str):
+def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str, ip_image:PIL.Image.Image, ref_image:PIL.Image.Image, fps:str):
     config_path = get_config_path(now_str)
     model_config: ModelConfig = get_model_config(config_path)
     stylize_dir = get_stylize_dir(video_name, fps)
     stylize_fg_dir = get_fg_dir(video_name, fps)
     save_image_to_path(ip_image, stylize_dir/'00_ipadapter'/'0.png')
-
+    save_image_to_path(ref_image, stylize_dir/'00_refonly'/'0.png')
+    
     if tab_select=='V2V':
         img2img_dir = stylize_dir/"00_img2img"
         img = Image.open( img2img_dir.joinpath("00000000.png") )
