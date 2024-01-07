@@ -586,7 +586,7 @@ def launch():
                           delete_if_exists, test_run],
                   # outputs=[o_status, output, data_sets, btn])
 
-                  outputs=[o_status, o_original, o_mask, o_lineart, o_depth, o_openpose, o_mediaface, o_front, o_front_refine, o_composite, o_final, btn])
+                  outputs=[o_status, o_original, o_mask, o_depth, o_lineart, o_openpose, o_mediaface, o_front, o_front_refine, o_composite, o_final, btn])
 
         ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio])        
         ad_ch.change(fn=change_cn, inputs=[ad_ch], outputs=[ad_ch, ad_scale])
