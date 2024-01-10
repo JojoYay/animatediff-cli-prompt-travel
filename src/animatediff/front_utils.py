@@ -95,39 +95,6 @@ def get_bg_dir(video_name:str, fps:str) -> Path:
     bg_folder_name = 'bg_' + video_name
     return get_stylize_dir(video_name, fps) / bg_folder_name
 
-# def find_mp4_files(folder, suffix=''):
-#     result_list = {}
-
-#     for root, dirs, files in os.walk(folder):
-#         for file in files:
-#             if file.endswith(".mp4"):
-#                 file_path = os.path.join(root, file)
-#                 folder_name = os.path.relpath(root, folder)
-#                 file_name = os.path.splitext(file)[0]
-                
-#                 if folder_name != ".":
-#                     file_name = os.path.join(folder_name, file_name)
-                
-#                 result_name = f"{suffix}{file_name}"
-#                 result_path = os.path.relpath(file_path, folder)
-#                 if folder.startswith("data/"):
-#                     folder2 = folder[len("data/"):]
-#                 result_list[result_name] = folder2+'/'+result_path
-
-#         for subdir in dirs:
-#             subdir_path = os.path.join(root, subdir)
-#             subdir_suffix = f"{suffix}{subdir}/" if suffix else f"{subdir}/"
-#             result_list = result_list | find_safetensor_files(subdir_path, subdir_suffix)
-            
-#     # キーでソートしたOrderedDictを作成
-#     ordered_result = OrderedDict(sorted(result_dict.items(), key=lambda x: x[0]))
-
-#     # JSONファイルに書き込み
-#     with open('sorted_result.json', 'w', encoding='utf-8') as json_file:
-#         json.dump(ordered_result, json_file, ensure_ascii=False, indent=4)
-
-#     return ordered_result
-
 def find_mp4_files(folder, suffix=''):
     result_dict = {}
 
@@ -151,43 +118,12 @@ def find_mp4_files(folder, suffix=''):
             subdir_path = os.path.join(root, subdir)
             subdir_suffix = f"{suffix}{subdir}/" if suffix else f"{subdir}/"
             result_dict = result_dict | find_safetensor_files(subdir_path, subdir_suffix)
-
-    # キーでソートしたOrderedDictを作成
     ordered_result = OrderedDict(sorted(result_dict.items(), key=lambda x: x[0]))
-
-    # JSONファイルに書き込み
     with open('sorted_result.json', 'w', encoding='utf-8') as json_file:
         json.dump(ordered_result, json_file, ensure_ascii=False, indent=4)
 
     return ordered_result
 
-
-# def find_safetensor_files(folder, suffix=''):
-#     result_list = []
-
-#     for root, dirs, files in os.walk(folder):
-#         for file in files:
-#             if file.endswith(".safetensors") or file.endswith(".ckpt"):
-#                 file_path = os.path.join(root, file)
-#                 folder_name = os.path.relpath(root, folder)
-#                 file_name = os.path.splitext(file)[0]
-                
-#                 if folder_name != ".":
-#                     file_name = os.path.join(folder_name, file_name)
-                
-#                 result_name = f"{suffix}{file_name}"
-#                 result_path = os.path.relpath(file_path, folder)
-#                 if folder.startswith("data/"):
-#                     folder2 = folder[len("data/"):]
-#                 result_list.append((result_name, folder2+'/'+result_path))
-
-#         for subdir in dirs:
-#             subdir_path = os.path.join(root, subdir)
-#             subdir_suffix = f"{suffix}{subdir}/" if suffix else f"{subdir}/"
-#             result_list.extend(find_safetensor_files(subdir_path, subdir_suffix))
-            
-#     result_list.sort(key=lambda x: x[0])  # file_name でソート
-#     return result_list
 
 def find_safetensor_files(folder, suffix=''):
     result_dict = {}

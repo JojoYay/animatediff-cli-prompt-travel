@@ -11,6 +11,7 @@ from animatediff.generate import save_output
 
 from animatediff.stylize import generate, create_config, create_mask, composite
 from animatediff.cli import refine
+from animatediff.ui_components import ToolButton
 import traceback
 import PIL
 
@@ -20,6 +21,8 @@ import os
 import time
 from pathlib import Path
 import shutil
+
+refresh_symbol = '\U0001f504'  # 🔄🗑️
 
 # Define the function signature
 def execute_wrapper(
@@ -422,7 +425,6 @@ def load_file(json_list):
     except:
         json_file = json.loads(json_list.decode('utf-8'))
 
-
     tab_select = gr.Textbox(value=json_file.get('tab_select', None))
     tab_select2 = gr.Textbox(value=json_file.get('tab_select2', None))
     url = gr.Textbox(value=json_file.get('url', None))
@@ -480,14 +482,7 @@ def load_file(json_list):
         inp_lora4 = gr.Dropdown(value=None)
         inp_lora4_step = gr.Slider(value=1.0)
 
-
-    
-    print(ml_files)
-    print("motion_lora_map:",json_file.get('motion_lora_map', {}))
-    
     motion_lora_map_key = list(json_file.get('motion_lora_map', {}).keys())
-    print("motion_lora_map_key:",motion_lora_map_key)
-        
     motion_lora_map_key = list(json_file.get('motion_lora_map', {}).keys())
     if len(motion_lora_map_key) > 0:
         mo1_ch = gr.Dropdown(value=get_key_by_value(ml_files,motion_lora_map_key[0]))
@@ -634,6 +629,30 @@ vae_choice = find_safetensor_files("data/vae")
 video_files = find_mp4_files("data/video")
 schedulers = get_schedulers()
 
+def model_rel(choice_type):
+    choice_files = find_safetensor_files('data/sd_models')
+    # choice_files = None
+    return gr.Dropdown(choices=choice_files)
+
+def vae_rel(choice_type):
+    choice_files = find_safetensor_files("data/vae")
+    return gr.Dropdown(choices=choice_files)
+
+def mm_rel(choice_type):
+    choice_files = find_safetensor_files("data/motion_modules")
+    return gr.Dropdown(choices=choice_files)
+
+def l_reload(choice_type):
+    choice_files = find_safetensor_files("data/lora")
+    return gr.Dropdown(choices=choice_files)
+
+def video_reload(choice_type):
+    choice_files = find_mp4_files("data/video")
+    return gr.Dropdown(choices=choice_files)
+
+def clear_dropdown():
+    return gr.Dropdown(value=None)
+
 def launch():
 
     ip_choice = ["full_face", "plus_face", "plus", "light"]
@@ -641,7 +660,7 @@ def launch():
     mask_type_choice = ["Original", "No Background"]
     context_choice = ["uniform", "composite"]
     
-    with gr.Blocks(css="#json_file {height: 100px;}") as iface:
+    with gr.Blocks(css="#json_file {height: 100px;}.small_btn{height: 30px !important;padding: 0 !important;width: 30px !important;min-width: 30px !important;}.small_area {width: 30px !important; padding: 0 !important; min-width: 30px !important;}") as iface:
         with gr.Row():
             gr.Markdown(
                 """
@@ -655,7 +674,12 @@ def launch():
             with gr.Column():
                 with gr.Tab("V2V") as v2v_tab:
                     with gr.Tab("Existing Video") as data_tab:
-                        dl_video = gr.Dropdown(choices=video_files, label="Videos", value=list(video_files.keys())[0] if list(video_files.keys()) != [] else None)
+                        with gr.Group():
+                            with gr.Row():
+                                dl_video = gr.Dropdown(choices=video_files, label="Videos", value=list(video_files.keys())[0] if list(video_files.keys()) != [] else None, scale=100)
+                                with gr.Column(elem_classes=["small_area"], scale=1):
+                                    vid_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
+                                    vid_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
                     with gr.Tab("Download from URL") as url_tab:
                         url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", show_label=False)
                 with gr.Tab("T2V") as t2v_tab:
@@ -677,12 +701,23 @@ def launch():
                 with gr.Group():
                     with gr.Group():
                         with gr.Row():
-                            inp_model = gr.Dropdown(choices=safetensor_files, value=list(safetensor_files.keys())[0] if list(safetensor_files.keys()) != [] else None, label="Model")
-                            inp_vae = gr.Dropdown(choices=vae_choice, value=list(vae_choice.keys())[0] if list(vae_choice.keys()) != [] else None, label="VAE")
-                            fps = gr.Slider(minimum=8, maximum=64, step=1, value=16, label="fps")
+                            inp_model = gr.Dropdown(choices=safetensor_files, value=list(safetensor_files.keys())[0] if list(safetensor_files.keys()) != [] else None, label="Model", scale=100)
+                            with gr.Column(elem_classes=["small_area"], scale=1):
+                                model_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
+                                model_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                            inp_vae = gr.Dropdown(choices=vae_choice, value=list(vae_choice.keys())[0] if list(vae_choice.keys()) != [] else None, label="VAE", scale=100)
+                            with gr.Column(elem_classes=["small_area"], scale=1):
+                                vae_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
+                                vae_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
                     with gr.Group():
                         with gr.Row():
-                            inp_mm = gr.Dropdown(choices=mm_files, value=list(mm_files.keys())[0] if list(mm_files.keys()) != [] else None, label="Motion Module")
+                            fps = gr.Slider(minimum=8, maximum=64, step=1, value=16, label="fps", scale=100)
+                            inp_mm = gr.Dropdown(choices=mm_files, value=list(mm_files.keys())[0] if list(mm_files.keys()) != [] else None, label="Motion Module", scale=100)
+                            with gr.Column(elem_classes=["small_area"], scale=1):
+                                mm_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
+                                mm_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                    with gr.Group():
+                        with gr.Row():
                             inp_sche = gr.Dropdown(choices=schedulers, value=list(schedulers.keys())[17], label="Sampling Method")
                             inp_context = gr.Dropdown(choices=context_choice, label="Context", value="uniform")
                     with gr.Group():
@@ -707,27 +742,41 @@ def launch():
                     with gr.Accordion("LoRAs", open=True):
                         with gr.Group():
                             with gr.Row():
-                                inp_lora1 = gr.Dropdown(choices=lora_files, label="Lora1", scale=3)
-                                inp_lora1_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA1 Scale", scale=1)
+                                inp_lora1 = gr.Dropdown(choices=lora_files, label="Lora1", scale=100)
+                                with gr.Column(elem_classes=["small_area"], scale=1):
+                                    lora1_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
+                                    lora1_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                                inp_lora1_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA1 Scale", scale=100)
                         with gr.Group():
                             with gr.Row():
-                                inp_lora2 = gr.Dropdown(choices=lora_files, label="Lora2", scale=3)
-                                inp_lora2_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA2 Scale", scale=1)
+                                inp_lora2 = gr.Dropdown(choices=lora_files, label="Lora2", scale=100)
+                                with gr.Column(elem_classes=["small_area"], scale=1):
+                                    lora2_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
+                                    lora2_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                                inp_lora2_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA2 Scale", scale=100)
                         with gr.Group():
                             with gr.Row():
-                                inp_lora3 = gr.Dropdown(choices=lora_files, label="Lora3", scale=3)
-                                inp_lora3_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA3 Scale", scale=1)
+                                inp_lora3 = gr.Dropdown(choices=lora_files, label="Lora3", scale=100)
+                                with gr.Column(elem_classes=["small_area"], scale=1):
+                                    lora3_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
+                                    lora3_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                                inp_lora3_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA3 Scale", scale=100)
                         with gr.Group():
                             with gr.Row():
-                                inp_lora4 = gr.Dropdown(choices=lora_files, label="Lora4", scale=3)
-                                inp_lora4_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA4 Scale", scale=1)
+                                inp_lora4 = gr.Dropdown(choices=lora_files, label="Lora4", scale=100)
+                                with gr.Column(elem_classes=["small_area"], scale=1):
+                                    lora4_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
+                                    lora4_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                                inp_lora4_step = gr.Slider(minimum=0.1, maximum=3, step=0.05, value=1.0, label="LoRA4 Scale", scale=100)
                     with gr.Accordion("Motion Lora", open=False):
                         with gr.Row():
-                            mo1_ch = gr.Dropdown(choices=ml_files, label="MotionLoRA1", scale=3)
-                            mo1_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA1 scale")
+                            mo1_ch = gr.Dropdown(choices=ml_files, label="MotionLoRA1", scale=100)
+                            mo1_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                            mo1_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA1 scale", scale=100)
                         with gr.Row():
-                            mo2_ch = gr.Dropdown(choices=ml_files, label="MotionLoRA2", scale=3)
-                            mo2_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA2 scale")
+                            mo2_ch = gr.Dropdown(choices=ml_files, label="MotionLoRA2", scale=100)
+                            mo2_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                            mo2_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA2 scale", sclae=100)
             with gr.Column():
                 with gr.Group():
                     with gr.Accordion("Special Effects", open=True):
@@ -842,6 +891,27 @@ def launch():
 
         data_tab.select(fn=select_data, outputs=[tab_select2])
         url_tab.select(fn=select_url, outputs=[tab_select2])
+
+        model_reload.click(fn=model_rel, outputs=[inp_model])
+        model_del.click(fn=clear_dropdown, outputs=[inp_model])
+        vae_reload.click(fn=vae_rel, outputs=[inp_vae])
+        vae_del.click(fn=clear_dropdown, outputs=[inp_vae])
+        mm_reload.click(fn=mm_rel, outputs=[inp_mm])
+        mm_del.click(fn=clear_dropdown, outputs=[inp_mm])
+        vid_reload.click(fn=video_reload, outputs=[dl_video])
+        vid_del.click(fn=clear_dropdown, outputs=[dl_video])
+                                                          
+        lora1_reload.click(fn=l_reload, outputs=[inp_lora1])
+        lora1_del.click(fn=clear_dropdown, outputs=[inp_lora1])
+        lora2_reload.click(fn=l_reload, outputs=[inp_lora2])
+        lora2_del.click(fn=clear_dropdown, outputs=[inp_lora2])
+        lora3_reload.click(fn=l_reload, outputs=[inp_lora3])
+        lora3_del.click(fn=clear_dropdown, outputs=[inp_lora3])
+        lora4_reload.click(fn=l_reload, outputs=[inp_lora4])
+        lora4_del.click(fn=clear_dropdown, outputs=[inp_lora4])
+
+        mo1_del.click(fn=clear_dropdown, outputs=[mo1_del])
+        mo2_del.click(fn=clear_dropdown, outputs=[mo2_del])
         
         load_btn.click(fn=load_file,
                        inputs=[json_file],
