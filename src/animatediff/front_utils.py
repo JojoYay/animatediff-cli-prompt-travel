@@ -15,6 +15,7 @@ import shutil
 import pytz
 import PIL
 from PIL import Image
+from collections import OrderedDict
 
 from animatediff import __version__, get_dir
 from animatediff.stylize import create_config, create_mask, generate, composite
@@ -28,26 +29,47 @@ def getNow() -> str:
     return time_str
 
 def get_schedulers():
-    return [("LCM", "lcm"),
-        ("DDIM", "ddim"),
-        ("PNDM", "pndm"),
-        ("Heun", "heun"),
-        ("UniPC", "unipc"),
-        ("Euler", "euler"),
-        ("Euler a", "euler_a"),
-        ("LMS", "lms"),
-        ("LMS Karras", "k_lms"),
-        ("DPM2", "dpm_2"),
-        ("DPM2 Karras", "k_dpm_2"),
-        ("DPM2 a", "dpm_2_a"),
-        ("DPM2 a Karras", "k_dpm_2_a"),
-        ("DPM++ 2M", "dpmpp_2m"),
-        ("DPM++ 2M Karras", "k_dpmpp_2m"),
-        ("DPM++ SDE", "dpmpp_sde"),
-        ("DPM++ SDE Karras", "k_dpmpp_sde"),
-        ("DPM++ 2M SDE", "dpmpp_2m_sde"),
-        ("DPM++ 2M SDE Karras", "k_dpmpp_2m_sde")]
-    
+    # return [("LCM", "lcm"),
+    #     ("DDIM", "ddim"),
+    #     ("PNDM", "pndm"),
+    #     ("Heun", "heun"),
+    #     ("UniPC", "unipc"),
+    #     ("Euler", "euler"),
+    #     ("Euler a", "euler_a"),
+    #     ("LMS", "lms"),
+    #     ("LMS Karras", "k_lms"),
+    #     ("DPM2", "dpm_2"),
+    #     ("DPM2 Karras", "k_dpm_2"),
+    #     ("DPM2 a", "dpm_2_a"),
+    #     ("DPM2 a Karras", "k_dpm_2_a"),
+    #     ("DPM++ 2M", "dpmpp_2m"),
+    #     ("DPM++ 2M Karras", "k_dpmpp_2m"),
+    #     ("DPM++ SDE", "dpmpp_sde"),
+    #     ("DPM++ SDE Karras", "k_dpmpp_sde"),
+    #     ("DPM++ 2M SDE", "dpmpp_2m_sde"),
+    #     ("DPM++ 2M SDE Karras", "k_dpmpp_2m_sde")]
+
+    return {
+        "LCM" : "lcm",
+        "DDIM": "ddim",
+        "PNDM": "pndm",
+        "Heun": "heun",
+        "UniPC": "unipc",
+        "Euler": "euler",
+        "Euler a": "euler_a",
+        "LMS": "lms",
+        "LMS Karras": "k_lms",
+        "DPM2": "dpm_2",
+        "DPM2 Karras": "k_dpm_2",
+        "DPM2 a": "dpm_2_a",
+        "DPM2 a Karras": "k_dpm_2_a",
+        "DPM++ 2M": "dpmpp_2m",
+        "DPM++ 2M Karras": "k_dpmpp_2m",
+        "DPM++ SDE": "dpmpp_sde",
+        "DPM++ SDE Karras": "k_dpmpp_sde",
+        "DPM++ 2M SDE": "dpmpp_2m_sde",
+        "DPM++ 2M SDE Karras": "k_dpmpp_2m_sde"}
+
 def create_file_list(folder_path):
     file_list = []
     files = os.listdir(folder_path)
@@ -73,8 +95,41 @@ def get_bg_dir(video_name:str, fps:str) -> Path:
     bg_folder_name = 'bg_' + video_name
     return get_stylize_dir(video_name, fps) / bg_folder_name
 
+# def find_mp4_files(folder, suffix=''):
+#     result_list = {}
+
+#     for root, dirs, files in os.walk(folder):
+#         for file in files:
+#             if file.endswith(".mp4"):
+#                 file_path = os.path.join(root, file)
+#                 folder_name = os.path.relpath(root, folder)
+#                 file_name = os.path.splitext(file)[0]
+                
+#                 if folder_name != ".":
+#                     file_name = os.path.join(folder_name, file_name)
+                
+#                 result_name = f"{suffix}{file_name}"
+#                 result_path = os.path.relpath(file_path, folder)
+#                 if folder.startswith("data/"):
+#                     folder2 = folder[len("data/"):]
+#                 result_list[result_name] = folder2+'/'+result_path
+
+#         for subdir in dirs:
+#             subdir_path = os.path.join(root, subdir)
+#             subdir_suffix = f"{suffix}{subdir}/" if suffix else f"{subdir}/"
+#             result_list = result_list | find_safetensor_files(subdir_path, subdir_suffix)
+            
+#     # キーでソートしたOrderedDictを作成
+#     ordered_result = OrderedDict(sorted(result_dict.items(), key=lambda x: x[0]))
+
+#     # JSONファイルに書き込み
+#     with open('sorted_result.json', 'w', encoding='utf-8') as json_file:
+#         json.dump(ordered_result, json_file, ensure_ascii=False, indent=4)
+
+#     return ordered_result
+
 def find_mp4_files(folder, suffix=''):
-    result_list = []
+    result_dict = {}
 
     for root, dirs, files in os.walk(folder):
         for file in files:
@@ -82,26 +137,60 @@ def find_mp4_files(folder, suffix=''):
                 file_path = os.path.join(root, file)
                 folder_name = os.path.relpath(root, folder)
                 file_name = os.path.splitext(file)[0]
-                
+
                 if folder_name != ".":
                     file_name = os.path.join(folder_name, file_name)
-                
+
                 result_name = f"{suffix}{file_name}"
                 result_path = os.path.relpath(file_path, folder)
                 if folder.startswith("data/"):
                     folder2 = folder[len("data/"):]
-                result_list.append((result_name, folder2+'/'+result_path))
+                result_dict[result_name] = folder2+'/'+result_path
 
         for subdir in dirs:
             subdir_path = os.path.join(root, subdir)
             subdir_suffix = f"{suffix}{subdir}/" if suffix else f"{subdir}/"
-            result_list.extend(find_safetensor_files(subdir_path, subdir_suffix))
+            result_dict = result_dict | find_safetensor_files(subdir_path, subdir_suffix)
+
+    # キーでソートしたOrderedDictを作成
+    ordered_result = OrderedDict(sorted(result_dict.items(), key=lambda x: x[0]))
+
+    # JSONファイルに書き込み
+    with open('sorted_result.json', 'w', encoding='utf-8') as json_file:
+        json.dump(ordered_result, json_file, ensure_ascii=False, indent=4)
+
+    return ordered_result
+
+
+# def find_safetensor_files(folder, suffix=''):
+#     result_list = []
+
+#     for root, dirs, files in os.walk(folder):
+#         for file in files:
+#             if file.endswith(".safetensors") or file.endswith(".ckpt"):
+#                 file_path = os.path.join(root, file)
+#                 folder_name = os.path.relpath(root, folder)
+#                 file_name = os.path.splitext(file)[0]
+                
+#                 if folder_name != ".":
+#                     file_name = os.path.join(folder_name, file_name)
+                
+#                 result_name = f"{suffix}{file_name}"
+#                 result_path = os.path.relpath(file_path, folder)
+#                 if folder.startswith("data/"):
+#                     folder2 = folder[len("data/"):]
+#                 result_list.append((result_name, folder2+'/'+result_path))
+
+#         for subdir in dirs:
+#             subdir_path = os.path.join(root, subdir)
+#             subdir_suffix = f"{suffix}{subdir}/" if suffix else f"{subdir}/"
+#             result_list.extend(find_safetensor_files(subdir_path, subdir_suffix))
             
-    result_list.sort(key=lambda x: x[0])  # file_name でソート
-    return result_list    
+#     result_list.sort(key=lambda x: x[0])  # file_name でソート
+#     return result_list
 
 def find_safetensor_files(folder, suffix=''):
-    result_list = []
+    result_dict = {}
 
     for root, dirs, files in os.walk(folder):
         for file in files:
@@ -109,24 +198,31 @@ def find_safetensor_files(folder, suffix=''):
                 file_path = os.path.join(root, file)
                 folder_name = os.path.relpath(root, folder)
                 file_name = os.path.splitext(file)[0]
-                
+
                 if folder_name != ".":
                     file_name = os.path.join(folder_name, file_name)
-                
+
                 result_name = f"{suffix}{file_name}"
                 result_path = os.path.relpath(file_path, folder)
                 if folder.startswith("data/"):
                     folder2 = folder[len("data/"):]
-                result_list.append((result_name, folder2+'/'+result_path))
+                result_dict[result_name] = folder2+'/'+result_path
 
         for subdir in dirs:
             subdir_path = os.path.join(root, subdir)
             subdir_suffix = f"{suffix}{subdir}/" if suffix else f"{subdir}/"
-            result_list.extend(find_safetensor_files(subdir_path, subdir_suffix))
+            result_dict = result_dict | find_safetensor_files(subdir_path, subdir_suffix)
             
-    result_list.sort(key=lambda x: x[0])  # file_name でソート
-    return result_list
-    
+    # キーでソートしたOrderedDictを作成
+    ordered_result = OrderedDict(sorted(result_dict.items(), key=lambda x: x[0]))
+
+    # JSONファイルに書き込み
+    with open('sorted_result.json', 'w', encoding='utf-8') as json_file:
+        json.dump(ordered_result, json_file, ensure_ascii=False, indent=4)
+
+    return ordered_result
+
+
 def find_last_folder_and_mp4_file(folder_path):
     subfolders = sorted([f.path for f in os.scandir(folder_path) if f.is_dir() and f.name[0].isdigit()], key=lambda x: os.path.basename(x))
     last_folder = subfolders[-1]
@@ -261,6 +357,13 @@ def change_re(enable):
     re_scale = gr.Slider(interactive=enable)
     re_interpo = gr.Slider(interactive=enable)
     return refine, re_scale, re_interpo
+
+def change_mask(enable):
+    mask_ch1 = gr.Checkbox(value=enable)
+    mask_target = gr.Textbox(interactive=enable)
+    mask_type1 = gr.Dropdown(interactive=enable)
+    mask_padding1 = gr.Slider(interactive=enable)
+    return mask_ch1, mask_target, mask_type1, mask_padding1
     
 def select_v2v():
     tab_select = gr.Textbox(lines=1, value='V2V', show_label=False)
@@ -346,6 +449,79 @@ def generate_example(original, mask_video, depth_video, lineart_video, openpose_
         result.append([final_video])
     return result
 
+import base64
+from io import BytesIO
+
+def image_to_base64(image):
+    if image is None:
+        return None
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    encoded_image = base64.b64encode(buffered.getvalue()).decode("utf-8")
+    return encoded_image
+
+def base64_to_image(base64_string):
+    if base64_string is None:
+        return None
+    decoded_image = base64.b64decode(base64_string)
+    image = Image.open(BytesIO(decoded_image))
+    return image
+
+def create_and_save_config_by_gui(
+    now_str: str,
+    video: str,
+    stylize_dir: Path, 
+    model: str, vae: str, fps: int,
+    motion_module: str, context: str, scheduler: str, 
+    is_lcm: bool, is_hires: bool,
+    step: int, cfg: float, seed: int,
+    single_prompt: bool, prompt_fixed_ratio: float, tensor_interpolation_slerp: bool,
+    head_prompt: str, inp_pro_map: str, neg_prompt: str,
+    inp_lora1: str, inp_lora1_step: float,
+    inp_lora2: str, inp_lora2_step: float,
+    inp_lora3: str, inp_lora3_step: float,
+    inp_lora4: str, inp_lora4_step: float,
+    mo1_ch: str, mo1_scale: float,
+    mo2_ch: str, mo2_scale: float,
+    mask_ch1: bool, mask_target: str, mask_type1: str, mask_padding1: int,
+    ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str, ip_image_ratio: float,
+    ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
+    dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
+    me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
+    ref_ch: bool, ref_image:  PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
+    is_refine: bool, re_scale: float, re_interpo: float,
+    tab_select: str, tab_select2: str, t_name: str, t_length: int, t_width: int, t_height: int, low_vr: bool, 
+    url: str, dl_video: str
+):
+    model_config = create_config_by_gui(
+    now_str,
+    video,
+    stylize_dir, 
+    model, vae, fps,
+    motion_module, context, scheduler, 
+    is_lcm, is_hires,
+    step, cfg, seed,
+    single_prompt, prompt_fixed_ratio, tensor_interpolation_slerp,
+    head_prompt, inp_pro_map, neg_prompt,
+    inp_lora1, inp_lora1_step,
+    inp_lora2, inp_lora2_step,
+    inp_lora3, inp_lora3_step,
+    inp_lora4, inp_lora4_step,
+    mo1_ch, mo1_scale,
+    mo2_ch, mo2_scale,
+    mask_ch1, mask_target, mask_type1, mask_padding1,
+    ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
+    ad_ch, ad_scale, op_ch, op_scale,
+    dp_ch, dp_scale, la_ch, la_scale,
+    me_ch, me_scale, i2i_ch, i2i_scale,
+    ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
+    is_refine, re_scale, re_interpo,
+    tab_select, tab_select2, t_name, t_length, t_width, t_height, low_vr, 
+    url, dl_video)
+        
+    save_config_path = get_config_path(now_str)
+    save_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
+    
 def create_config_by_gui(
     now_str:str,
     video:str,
@@ -362,14 +538,16 @@ def create_config_by_gui(
     inp_lora4: str, inp_lora4_step: float,
     mo1_ch: str, mo1_scale: float,
     mo2_ch: str, mo2_scale: float,
-    mask_target:str,
+    mask_ch1: bool, mask_target: str, mask_type1: str, mask_padding1: int,
     ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str,ip_image_ratio:float,
     ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
     me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
     ref_ch: bool, ref_image:  PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
-    tab_select:str, t_name: str, t_length:int, t_width:int, t_height:int
-) -> Path:
+    is_refine: bool, re_scale: float, re_interpo: float,
+    tab_select: str, tab_select2: str, t_name: str, t_length: int, t_width: int, t_height: int, low_vr: bool, 
+    url: str, dl_video: str
+) -> ModelConfig:
     data_dir = get_dir("data")
     org_config='config/fix/real_base2.json'
     model_config: ModelConfig = get_model_config(org_config)
@@ -407,6 +585,10 @@ def create_config_by_gui(
     print(f"mo1_scale: {mo1_scale}")
     print(f"mo2_ch: {mo2_ch}")
     print(f"mo2_scale: {mo2_scale}")
+    print(f"mask_ch1: {mask_ch1}")
+    print(f"mask_target: {mask_target}")
+    print(f"mask_type1: {mask_type1}")
+    print(f"mask_padding1: {mask_padding1}")
     print(f"ip_ch: {ip_ch}")
     print(f"ip_image: {ip_image}")
     print(f"ip_scale: {ip_scale}")
@@ -429,11 +611,18 @@ def create_config_by_gui(
     print(f"ref_attention: {ref_attention}")
     print(f"ref_gn: {ref_gn}")
     print(f"ref_weight: {ref_weight}")
+    print(f"is_refine: {is_refine}")
+    print(f"re_scale: {re_scale}")
+    print(f"re_interpo: {re_interpo}")
     print(f"tab_select: {tab_select}")
+    print(f"tab_select2: {tab_select2}")
     print(f"t_name: {t_name}")
     print(f"t_length: {t_length}")
     print(f"t_width: {t_width}")
     print(f"t_height: {t_height}")
+    print(f"low_vr: {low_vr}")
+    print(f"url: {url}")
+    print(f"dl_video: {dl_video}")
     
     model_config.name = now_str
     model_config.path = Path(model)
@@ -508,32 +697,46 @@ def create_config_by_gui(
     model_config.lora_map = {}
     # print(inp_lora1)
 #    if inp_lora1 is not None:
-    if len(inp_lora1) > 0:
+    if inp_lora1 is not None:
         model_config.lora_map.update({inp_lora1 : {
             "region": ["0"],
             "scale": {"0": inp_lora1_step}
         }})
-    if len(inp_lora2) > 0:
+    if inp_lora2 is not None:
         model_config.lora_map.update({inp_lora2 : {
             "region": ["0"],
             "scale": {"0": inp_lora2_step}
         }})
-    if len(inp_lora3) > 0:
+    if inp_lora3 is not None:
         model_config.lora_map.update({inp_lora3 : {
             "region": ["0"],
             "scale": {"0": inp_lora3_step}
         }})
-    if len(inp_lora4) > 0:
+    if inp_lora4 is not None:
         model_config.lora_map.update({inp_lora4 : {
             "region": ["0"],
             "scale": {"0": inp_lora4_step}
         }})
     
-    if mo1_ch is not None and len(mo1_ch) > 0:
+    if mo1_ch is not None:
         model_config.motion_lora_map[mo1_ch] = mo1_scale
-    if mo2_ch is not None and len(mo2_ch) > 0:
+    if mo2_ch is not None:
         model_config.motion_lora_map[mo2_ch] = mo2_scale
-    
+
+    model_config.mask_ch1 = mask_ch1
+    model_config.mask_target = mask_target
+    model_config.mask_type1 = mask_type1
+    model_config.mask_padding1 =mask_padding1
+    model_config.refine = is_refine
+    model_config.re_scale = re_scale
+    model_config.re_interpo = re_interpo
+    model_config.tab_select = tab_select
+    model_config.tab_select2 = tab_select2
+    model_config.url = url
+    model_config.dl_video = dl_video
+    model_config.ip_type = ip_type
+    model_config.ip_image = image_to_base64(ip_image)
+        
     # model_config.controlnet_map["input_image_dir"] = stylize_dir/'00_controlnet_image'
     # model_config.controlnet_map["input_image_dir"] = os.path.relpath((stylize_dir/'00_controlnet_image').absolute(), data_dir)
     # model_config.img2img_map["init_img_dir"] = os.path.relpath((stylize_dir/'00_img2img').absolute(), data_dir)
@@ -575,13 +778,13 @@ def create_config_by_gui(
     model_config.controlnet_map["controlnet_ref"]["attention_auto_machine_weight"] = ref_attention
     model_config.controlnet_map["controlnet_ref"]["gn_auto_machine_weight"] = ref_gn
     model_config.controlnet_map["controlnet_ref"]["style_fidelity"] = ref_weight
+    model_config.low_vr = low_vr
     if ref_ch:
         model_config.unet_batch_size = 2
     else:
         model_config.unet_batch_size = 1
     
-    save_config_path = get_config_path(now_str)
-    save_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
+    return model_config;
 
 def save_image_to_path(image, file_path):
     folder_path = os.path.dirname(file_path)
@@ -696,3 +899,12 @@ def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str, ip_
 #     stylize_config: Dict[str,Any]= Field({})
 #     output: Dict[str,Any]= Field({})
 #     result: Dict[str,Any]= Field({})
+
+    # mask_ch1: bool = Field(False)
+    # mask_target: str = ""
+    # mask_type1:str = ""
+    # mask_padding1:int = 0
+    # refine:bool = Field(False)
+    # re_scale:float = 0.75
+    # re_interpo:int = 1
+    # low_vr = false
