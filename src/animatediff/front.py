@@ -776,7 +776,7 @@ def launch():
                         with gr.Row():
                             mo2_ch = gr.Dropdown(choices=ml_files, label="MotionLoRA2", scale=100)
                             mo2_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
-                            mo2_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA2 scale", sclae=100)
+                            mo2_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.8, label="Motion LoRA2 scale", scale=100)
             with gr.Column():
                 with gr.Group():
                     with gr.Accordion("Special Effects", open=True):
