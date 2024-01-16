@@ -33,6 +33,8 @@ filterwarnings("ignore", category=UserWarning, message="TypedStorage is deprecat
 # you too tqdm
 filterwarnings("ignore", category=TqdmExperimentalWarning)
 
+# filterwarnings("ignore", category=UserWarning, message="Expected 1 arguments for function")
+# filterwarnings("ignore", category=FutureWarning, message="jax.tree_util.register_keypaths is deprecated")
 
 @lru_cache(maxsize=4)
 def get_dir(dirname: str = "data") -> Path:

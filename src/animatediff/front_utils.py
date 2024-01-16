@@ -29,26 +29,6 @@ def getNow() -> str:
     return time_str
 
 def get_schedulers():
-    # return [("LCM", "lcm"),
-    #     ("DDIM", "ddim"),
-    #     ("PNDM", "pndm"),
-    #     ("Heun", "heun"),
-    #     ("UniPC", "unipc"),
-    #     ("Euler", "euler"),
-    #     ("Euler a", "euler_a"),
-    #     ("LMS", "lms"),
-    #     ("LMS Karras", "k_lms"),
-    #     ("DPM2", "dpm_2"),
-    #     ("DPM2 Karras", "k_dpm_2"),
-    #     ("DPM2 a", "dpm_2_a"),
-    #     ("DPM2 a Karras", "k_dpm_2_a"),
-    #     ("DPM++ 2M", "dpmpp_2m"),
-    #     ("DPM++ 2M Karras", "k_dpmpp_2m"),
-    #     ("DPM++ SDE", "dpmpp_sde"),
-    #     ("DPM++ SDE Karras", "k_dpmpp_sde"),
-    #     ("DPM++ 2M SDE", "dpmpp_2m_sde"),
-    #     ("DPM++ 2M SDE Karras", "k_dpmpp_2m_sde")]
-
     return {
         "LCM" : "lcm",
         "DDIM": "ddim",
@@ -304,7 +284,8 @@ def change_mask(enable):
 def select_v2v():
     tab_select = gr.Textbox(lines=1, value='V2V', show_label=False)
     btn = gr.Button("Generate V2V", scale=1)
-    mask_grp = gr.Row(visible=True)
+    mask_grp1 = gr.Row(visible=True)
+    mask_grp2 = gr.Row(visible=True)
     i2i_grp = gr.Row(visible=True)
     ad_grp = gr.Row(visible=True)
     op_grp = gr.Row(visible=True)
@@ -313,12 +294,13 @@ def select_v2v():
     me_grp = gr.Row(visible=True)
     delete_if_exists = gr.Checkbox(visible=True)
     test_run = gr.Checkbox(visible=True)
-    return tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists
+    return tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists
 
 def select_t2v():
     tab_select = gr.Textbox(lines=1, value='T2V', show_label=False)
     btn = gr.Button("Generate T2V", scale=1)
-    mask_grp = gr.Row(visible=False)
+    mask_grp1 = gr.Row(visible=True)
+    mask_grp2 = gr.Row(visible=True)
     i2i_grp = gr.Row(visible=False)
     ad_grp = gr.Row(visible=False)
     op_grp = gr.Row(visible=False)
@@ -327,7 +309,7 @@ def select_t2v():
     me_grp = gr.Row(visible=False)
     delete_if_exists = gr.Checkbox(visible=False)
     test_run = gr.Checkbox(visible=False)
-    return tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists
+    return tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists
 
 def select_data():
     tab_select = gr.Textbox(lines=1, value='Data', show_label=False)

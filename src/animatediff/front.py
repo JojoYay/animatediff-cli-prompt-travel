@@ -11,7 +11,6 @@ from animatediff.generate import save_output
 
 from animatediff.stylize import generate, create_config, create_mask, composite
 from animatediff.cli import refine
-from animatediff.ui_components import ToolButton
 import traceback
 import PIL
 
@@ -21,8 +20,6 @@ import os
 import time
 from pathlib import Path
 import shutil
-
-refresh_symbol = '\U0001f504'  # 🔄🗑️
 
 # Define the function signature
 def execute_wrapper(
@@ -48,12 +45,6 @@ def execute_wrapper(
       is_refine: bool, re_scale: float, re_interpo: float,
       delete_if_exists: bool, is_test: bool
     ):
-    # safetensor_files = find_safetensor_files("data/sd_models")
-    # lora_files = find_safetensor_files("data/lora")
-    # mm_files = find_safetensor_files("data/motion_modules")
-    # ml_files = find_safetensor_files("data/motion_lora")
-    # vae_choice = find_safetensor_files("data/vae")
-    # video_files = find_mp4_files("data/video")
     
     inp_model = safetensor_files[inp_model] if inp_model != [] else None
     inp_vae = vae_choice[inp_vae] if inp_vae != [] else None
@@ -317,6 +308,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
             cur_width = model_config.stylize_config["0"]["width"]
             print(f"cur_width {cur_width}")
             new_width = int(float(cur_width) * float(1.5))
+            new_width = round(new_width / 8) * 8
             print(f"refine width {new_width}")
             yield 'refining fg video', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
             # yield 'refining fg video', pick_video(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), generate_example(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), gr.Button("Generating...", scale=1, interactive=False)
@@ -629,25 +621,25 @@ vae_choice = find_safetensor_files("data/vae")
 video_files = find_mp4_files("data/video")
 schedulers = get_schedulers()
 
-def model_rel(choice_type):
-    choice_files = find_safetensor_files('data/sd_models')
+def model_rel():
+    safetensor_files = find_safetensor_files('data/sd_models')
     # choice_files = None
     return gr.Dropdown(choices=choice_files)
 
-def vae_rel(choice_type):
-    choice_files = find_safetensor_files("data/vae")
+def vae_rel():
+    vae_choice = find_safetensor_files("data/vae")
     return gr.Dropdown(choices=choice_files)
 
-def mm_rel(choice_type):
-    choice_files = find_safetensor_files("data/motion_modules")
+def mm_rel():
+    mm_files = find_safetensor_files("data/motion_modules")
     return gr.Dropdown(choices=choice_files)
 
-def l_reload(choice_type):
-    choice_files = find_safetensor_files("data/lora")
+def l_reload():
+    lora_files = find_safetensor_files("data/lora")
     return gr.Dropdown(choices=choice_files)
 
-def video_reload(choice_type):
-    choice_files = find_mp4_files("data/video")
+def video_reload():
+    video_files = find_mp4_files("data/video")
     return gr.Dropdown(choices=choice_files)
 
 def clear_dropdown():
@@ -796,35 +788,35 @@ def launch():
                                 ref_gn = gr.Slider(minimum=0, maximum=1, step=0.1, value=1.0, label="gn auto machine weight", interactive=False)
                                 ref_weight = gr.Slider(minimum=0, maximum=1, step=0.1, value=1.0, label="Ref Only Weight", interactive=False)
                                 
-                        with gr.Row() as mask_grp:
-                            with gr.Column():
-                                with gr.Group():
-                                    mask_ch1 = gr.Checkbox(label="Mask(Inpaint)", value=False)
-                                    mask_target = gr.Textbox(lines=1, value="person", show_label=False, interactive=False)
+                        with gr.Row() as mask_grp1:
+                            mask_ch1 = gr.Checkbox(label="Mask(Inpaint)", value=False)
+                            mask_target = gr.Textbox(lines=1, value="person", show_label=False, interactive=False)
+                        with gr.Row() as mask_grp2:
                             mask_type1 = gr.Dropdown(choices=mask_type_choice, label="Type", value="Original", interactive=False)
                             mask_padding1 = gr.Slider(minimum=-100, maximum=100, step=1, value=0, label="Mask Padding", interactive=False)
                         with gr.Row() as i2i_grp:
                             i2i_ch = gr.Checkbox(label="Image2Image", value=False)
-                            i2i_scale = gr.Slider(minimum=0.05, maximum=5,  step=0.05, value=0.7, label="Denoising Strength")
+                            i2i_scale = gr.Slider(minimum=0.05, maximum=2,  step=0.05, value=0.7, label="Denoising Strength")
                         with gr.Row() as ad_grp:
                             ad_ch = gr.Checkbox(label="AimateDiff Controlnet", value=True)
-                            ad_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.25, label="AnimateDiff Controlnet Weight")
+                            ad_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.25, label="AnimateDiff Controlnet Weight")
                         with gr.Row() as op_grp:
                             op_ch = gr.Checkbox(label="Open Pose", value=True)
-                            op_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.9, label="Open Pose Weight")
+                            op_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.9, label="Open Pose Weight")
                         with gr.Row() as dp_grp:
                             dp_ch = gr.Checkbox(label="Depth", value=False)
-                            dp_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="Depth Weight", interactive=False)
+                            dp_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Depth Weight", interactive=False)
                         with gr.Row() as la_grp:
                             la_ch = gr.Checkbox(label="Lineart", value=False)
-                            la_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="Lineart Weight", interactive=False)
+                            la_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Lineart Weight", interactive=False)
                         with gr.Row() as me_grp:
                             me_ch = gr.Checkbox(label="Mediapipe Face", value=False)
-                            me_scale = gr.Slider(minimum=0, maximum=2,  step=0.05, value=0.5, label="Mediapipe Face Weight", interactive=False)
+                            me_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Mediapipe Face Weight", interactive=False)
                         with gr.Row() as refine_grp:
                             refine = gr.Checkbox(label="Refine", value=False)
-                            re_scale = gr.Slider(minimum=0.05, maximum=2,  step=0.05, value=0.75, label="Tile-upscale", interactive=False)
+                            re_scale = gr.Slider(minimum=0.05, maximum=1,  step=0.05, value=0.25, label="Tile Weight", interactive=False)
                             re_interpo = gr.Slider(minimum=1, maximum=3,  step=1, value=1, label="Interporation Mulitiplier", visible=False, interactive=False)
+                            # re_ad_scale = gr.Slider(minimum=0.05, maximum=1,  step=0.05, value=0.75, label="AD Weight", interactive=False)
 
                     with gr.Row():
                         delete_if_exists = gr.Checkbox(label="Delete cache")
@@ -886,8 +878,8 @@ def launch():
         refine.change(fn=change_re, inputs=[refine], outputs=[refine, re_scale, re_interpo])
         i2i_ch.change(fn=change_cn, inputs=[i2i_ch], outputs=[i2i_ch, i2i_scale])
         ref_ch.change(fn=change_ref, inputs=[ref_ch], outputs=[ref_ch, ref_image, ref_attention, ref_gn, ref_weight])
-        v2v_tab.select(fn=select_v2v, outputs=[tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
-        t2v_tab.select(fn=select_t2v, outputs=[tab_select, btn, mask_grp, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
+        v2v_tab.select(fn=select_v2v, outputs=[tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
+        t2v_tab.select(fn=select_t2v, outputs=[tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
 
         data_tab.select(fn=select_data, outputs=[tab_select2])
         url_tab.select(fn=select_url, outputs=[tab_select2])
@@ -910,8 +902,8 @@ def launch():
         lora4_reload.click(fn=l_reload, outputs=[inp_lora4])
         lora4_del.click(fn=clear_dropdown, outputs=[inp_lora4])
 
-        mo1_del.click(fn=clear_dropdown, outputs=[mo1_del])
-        mo2_del.click(fn=clear_dropdown, outputs=[mo2_del])
+        mo1_del.click(fn=clear_dropdown, outputs=[mo1_ch])
+        mo2_del.click(fn=clear_dropdown, outputs=[mo2_ch])
         
         load_btn.click(fn=load_file,
                        inputs=[json_file],

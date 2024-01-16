@@ -1124,9 +1124,11 @@ def refine(
 
         controlnet_img_dir = save_dir.joinpath(f"{repeat_count:02d}_controlnet_image")
 
-        for c in ["controlnet_canny","controlnet_depth","controlnet_inpaint","controlnet_ip2p","controlnet_lineart","controlnet_lineart_anime","controlnet_mlsd","controlnet_normalbae","controlnet_openpose","controlnet_scribble","controlnet_seg","controlnet_shuffle","controlnet_softedge","controlnet_tile"]:
+        for c in ["animatediff_controlnet", "controlnet_canny","controlnet_depth","controlnet_inpaint","controlnet_ip2p","controlnet_lineart","controlnet_lineart_anime","controlnet_mlsd","controlnet_normalbae","controlnet_openpose","controlnet_scribble","controlnet_seg","controlnet_shuffle","controlnet_softedge","controlnet_tile"]:
             c_dir = controlnet_img_dir.joinpath(c)
             c_dir.mkdir(parents=True, exist_ok=True)
+            if(c == "controlnet_openpose"):
+                shutil.copytree(frames_dir, c_dir, dirs_exist_ok=True)
 
         shutil.copytree(frames_dir, controlnet_img_dir.joinpath("controlnet_tile"), dirs_exist_ok=True)
 
@@ -1153,7 +1155,6 @@ def refine(
 
         config_path = save_dir.joinpath(f"{repeat_count:02d}_prompt.json")
         config_path.write_text(model_config.json(indent=4), encoding="utf-8")
-
 
         generated_dir = generate(
             config_path=config_path,
