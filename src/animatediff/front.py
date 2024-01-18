@@ -38,7 +38,7 @@ def execute_wrapper(
       mo2_ch: str, mo2_scale: float,
       ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str, ip_image_ratio:float,
       mask_ch1: bool, mask_target:str, mask_type1: str, mask_padding1:int,
-      ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
+      ad_ch: bool, ad_scale: float, tl_ch:bool, tl_scale:float, op_ch: bool, op_scale: float,
       dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
       me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
       ref_ch: bool, ref_image: PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
@@ -129,7 +129,7 @@ def execute_wrapper(
             mo2_ch=mo2_ch, mo2_scale=mo2_scale,
             mask_ch1=mask_ch1, mask_target=mask_target, mask_type1=mask_type1, mask_padding1=mask_padding1,
             ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,ip_image_ratio=ip_image_ratio,
-            ad_ch=ad_ch, ad_scale=ad_scale, op_ch=op_ch, op_scale=op_scale,
+            ad_ch=ad_ch, ad_scale=ad_scale, tl_ch=tl_ch, tl_scale=tl_scale, op_ch=op_ch, op_scale=op_scale,
             dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
             me_ch=me_ch, me_scale=me_scale, i2i_ch=i2i_ch, i2i_scale=i2i_scale,
             ref_ch=ref_ch, ref_image=ref_image, ref_attention=ref_attention, ref_gn=ref_gn, ref_weight=ref_weight,
@@ -501,6 +501,8 @@ def load_file(json_list):
     mask_padding1 = gr.Slider(value=json_file.get('mask_padding1', None))
     ad_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('animatediff_controlnet', {}).get('enable', False))
     ad_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('animatediff_controlnet', {}).get('controlnet_conditioning_scale', None))
+    tl_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_tile', {}).get('enable', False))
+    tl_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_tile', {}).get('controlnet_conditioning_scale', None))
     op_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_openpose', {}).get('enable', False))
     op_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_openpose', {}).get('controlnet_conditioning_scale', None))
     dp_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_depth', {}).get('enable', False))
@@ -545,7 +547,7 @@ def save_file(tab_select, tab_select2, url, dl_video, t_name, t_length, t_width,
               mo2_ch, mo2_scale,
               ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
               mask_ch1, mask_target, mask_type1, mask_padding1,
-              ad_ch, ad_scale, op_ch, op_scale,
+              ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
               dp_ch, dp_scale, la_ch, la_scale,
               me_ch, me_scale, i2i_ch, i2i_scale,
               ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
@@ -597,7 +599,7 @@ def save_file(tab_select, tab_select2, url, dl_video, t_name, t_length, t_width,
         mo2_ch=mo2_ch, mo2_scale=mo2_scale,
         mask_ch1=mask_ch1, mask_target=mask_target, mask_type1=mask_type1, mask_padding1=mask_padding1,
         ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,ip_image_ratio=ip_image_ratio,
-        ad_ch=ad_ch, ad_scale=ad_scale, op_ch=op_ch, op_scale=op_scale,
+        ad_ch=ad_ch, ad_scale=ad_scale, tl_ch=tl_ch, tl_scale=tl_scale, op_ch=op_ch, op_scale=op_scale,
         dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
         me_ch=me_ch, me_scale=me_scale, i2i_ch=i2i_ch, i2i_scale=i2i_scale,
         ref_ch=ref_ch, ref_image=ref_image, ref_attention=ref_attention, ref_gn=ref_gn, ref_weight=ref_weight,
@@ -622,25 +624,30 @@ video_files = find_mp4_files("data/video")
 schedulers = get_schedulers()
 
 def model_rel():
+    global safetensor_files
     safetensor_files = find_safetensor_files('data/sd_models')
     # choice_files = None
-    return gr.Dropdown(choices=choice_files)
+    return gr.Dropdown(choices=safetensor_files)
 
 def vae_rel():
+    global vae_choice
     vae_choice = find_safetensor_files("data/vae")
-    return gr.Dropdown(choices=choice_files)
+    return gr.Dropdown(choices=vae_choice)
 
 def mm_rel():
+    global mm_files
     mm_files = find_safetensor_files("data/motion_modules")
-    return gr.Dropdown(choices=choice_files)
+    return gr.Dropdown(choices=mm_files)
 
 def l_reload():
+    global lora_files
     lora_files = find_safetensor_files("data/lora")
-    return gr.Dropdown(choices=choice_files)
+    return gr.Dropdown(choices=lora_files)
 
 def video_reload():
+    global video_files
     video_files = find_mp4_files("data/video")
-    return gr.Dropdown(choices=choice_files)
+    return gr.Dropdown(choices=video_files)
 
 def clear_dropdown():
     return gr.Dropdown(value=None)
@@ -668,10 +675,13 @@ def launch():
                     with gr.Tab("Existing Video") as data_tab:
                         with gr.Group():
                             with gr.Row():
-                                dl_video = gr.Dropdown(choices=video_files, label="Videos", value=list(video_files.keys())[0] if list(video_files.keys()) != [] else None, scale=100)
-                                with gr.Column(elem_classes=["small_area"], scale=1):
-                                    vid_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
-                                    vid_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                               # with gr.Column(elem_classes=["small_area"], scale=1):
+                                    # video_cate = gr.Dropdown(choices=video_files, label="Videos", value=list(video_files.keys())[0] if list(video_files.keys()) != [] else None, scale=100)
+
+                                    dl_video = gr.Dropdown(choices=video_files, label="Videos", value=list(video_files.keys())[0] if list(video_files.keys()) != [] else None, scale=100)
+                                    with gr.Column(elem_classes=["small_area"], scale=1):
+                                        vid_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
+                                        vid_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
                     with gr.Tab("Download from URL") as url_tab:
                         url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", show_label=False)
                 with gr.Tab("T2V") as t2v_tab:
@@ -800,6 +810,9 @@ def launch():
                         with gr.Row() as ad_grp:
                             ad_ch = gr.Checkbox(label="AimateDiff Controlnet", value=True)
                             ad_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.25, label="AnimateDiff Controlnet Weight")
+                        with gr.Row() as tile_grp:
+                            tl_ch = gr.Checkbox(label="Tile", value=False)
+                            tl_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.25, label="Tile Weight")
                         with gr.Row() as op_grp:
                             op_ch = gr.Checkbox(label="Open Pose", value=True)
                             op_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.9, label="Open Pose Weight")
@@ -858,7 +871,7 @@ def launch():
                           mo2_ch, mo2_scale,
                           ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
                           mask_ch1, mask_target, mask_type1, mask_padding1,
-                          ad_ch, ad_scale, op_ch, op_scale,
+                          ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
                           me_ch, me_scale, i2i_ch, i2i_scale,
                           ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
@@ -870,6 +883,7 @@ def launch():
 
         ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio])        
         ad_ch.change(fn=change_cn, inputs=[ad_ch], outputs=[ad_ch, ad_scale])
+        tl_ch.change(fn=change_cn, inputs=[tl_ch], outputs=[tl_ch, tl_scale])
         op_ch.change(fn=change_cn, inputs=[op_ch], outputs=[op_ch, op_scale])
         dp_ch.change(fn=change_cn, inputs=[dp_ch], outputs=[dp_ch, dp_scale])
         la_ch.change(fn=change_cn, inputs=[la_ch], outputs=[la_ch, la_scale])
@@ -922,7 +936,7 @@ def launch():
                           mo2_ch, mo2_scale,
                           ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
                           mask_ch1, mask_target, mask_type1, mask_padding1,
-                          ad_ch, ad_scale, op_ch, op_scale,
+                          ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
                           me_ch, me_scale, i2i_ch, i2i_scale,
                           ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
@@ -944,7 +958,7 @@ def launch():
                           mo2_ch, mo2_scale,
                           ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
                           mask_ch1, mask_target, mask_type1, mask_padding1,
-                          ad_ch, ad_scale, op_ch, op_scale,
+                          ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
                           dp_ch, dp_scale, la_ch, la_scale,
                           me_ch, me_scale, i2i_ch, i2i_scale,
                           ref_ch, ref_image, ref_attention, ref_gn, ref_weight,

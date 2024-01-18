@@ -403,7 +403,7 @@ def create_and_save_config_by_gui(
     mo2_ch: str, mo2_scale: float,
     mask_ch1: bool, mask_target: str, mask_type1: str, mask_padding1: int,
     ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str, ip_image_ratio: float,
-    ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
+    ad_ch: bool, ad_scale: float, tl_ch: bool, tl_scale: float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
     me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
     ref_ch: bool, ref_image:  PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
@@ -429,7 +429,7 @@ def create_and_save_config_by_gui(
     mo2_ch, mo2_scale,
     mask_ch1, mask_target, mask_type1, mask_padding1,
     ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
-    ad_ch, ad_scale, op_ch, op_scale,
+    ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
     dp_ch, dp_scale, la_ch, la_scale,
     me_ch, me_scale, i2i_ch, i2i_scale,
     ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
@@ -458,7 +458,7 @@ def create_config_by_gui(
     mo2_ch: str, mo2_scale: float,
     mask_ch1: bool, mask_target: str, mask_type1: str, mask_padding1: int,
     ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str,ip_image_ratio:float,
-    ad_ch: bool, ad_scale: float, op_ch: bool, op_scale: float,
+    ad_ch: bool, ad_scale: float, tl_ch:bool, tl_scale:float, op_ch: bool, op_scale: float,
     dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
     me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
     ref_ch: bool, ref_image:  PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
@@ -514,6 +514,8 @@ def create_config_by_gui(
     print(f"ip_image_ratio: {ip_image_ratio}")
     print(f"ad_ch: {ad_ch}")
     print(f"ad_scale: {ad_scale}")
+    print(f"tl_ch: {tl_ch}")
+    print(f"tl_scale: {tl_scale}")
     print(f"op_ch: {op_ch}")
     print(f"op_scale: {op_scale}")
     print(f"dp_ch: {dp_ch}")
@@ -680,6 +682,8 @@ def create_config_by_gui(
     model_config.ip_adapter_map["save_input_image"] = False
     # save_image_to_path(ip_image, stylize_dir/'00_ipadapter'/'0.png')
     
+    model_config.controlnet_map["controlnet_tile"]["enable"] = tl_ch
+    model_config.controlnet_map["controlnet_tile"]["controlnet_conditioning_scale"] = tl_scale
     model_config.controlnet_map["animatediff_controlnet"]["enable"] = ad_ch
     model_config.controlnet_map["animatediff_controlnet"]["controlnet_conditioning_scale"] = ad_scale
     model_config.controlnet_map["controlnet_openpose"]["enable"] = op_ch
