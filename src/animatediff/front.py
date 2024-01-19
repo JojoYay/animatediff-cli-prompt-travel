@@ -58,6 +58,8 @@ def execute_wrapper(
     mo2_ch = ml_files[mo2_ch] if mo2_ch is not None and mo2_ch != [] else None
     dl_video = video_files[dl_video] if dl_video != [] else None
     
+    ref_ch = False #no more refine... just generate it again with result
+    
     yield 'generation Initiated...', None, None, None, None, None, None, None, None, None, None, gr.Button("Generating...", scale=1, interactive=False)
     # yield 'generation Initiated...', None, [], gr.Button("Generating...", scale=1, interactive=False)
     start_time = time.time()
@@ -113,7 +115,7 @@ def execute_wrapper(
             video_name = t_name
             saved_file = None
 
-        if is_test:
+        if is_test and "__test_stylize__" not in dl_video:
             if os.path.exists('stylize/__test_stylize__'):
                 shutil.rmtree('stylize/__test_stylize__')
             os.makedirs('stylize/__test_stylize__')
