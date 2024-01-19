@@ -901,7 +901,7 @@ def launch():
                 with gr.Row():
                 # data_sets=gr.Dataset(components=[output], samples=[], label="Result Videos")
                     # examples = gr.Examples(examples=video_paths, inputs=input_hidden, outputs=output, cache_examples=False)
-                    o_original = gr.Video(width=128, label="Original Video", scale=1)
+                    o_original = gr.Video(width=128, label="Original Video", scale=1, visible=False)
                     o_mask = gr.Video(width=128, label="Mask", scale=1)
                     o_openpose = gr.Video(width=128, label="Open Pose", scale=1)
                     o_depth = gr.Video(width=128, label="Depth", scale=1)
@@ -909,7 +909,7 @@ def launch():
                 with gr.Row():
                     o_mediaface = gr.Video(width=128, label="Mediapipe Face", scale=1)
                     o_front = gr.Video(width=128, label="Front Video", scale=1)
-                    o_front_refine = gr.Video(width=128, label="Front Video (Refined)", scale=1)
+                    o_front_refine = gr.Video(width=128, label="Front Video (Refined)", scale=1, visible=False)
                     o_composite = gr.Video(width=128, label="Composite Video", scale=1)
                     o_final = gr.Video(width=128, label="Generated Video", scale=1)             
 
