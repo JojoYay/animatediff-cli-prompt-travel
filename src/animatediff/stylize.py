@@ -263,6 +263,7 @@ def create_config(
 
     img2img_dir = save_dir.joinpath("00_img2img")
     img2img_dir.mkdir(parents=True, exist_ok=True)
+    print(f"img2img_dir: {img2img_dir.resolve()}")
     extract_frames(org_movie, fps, img2img_dir, aspect_ratio, duration, offset, size_of_short_edge, low_vram)
 
     controlnet_img_dir = save_dir.joinpath("00_controlnet_image")

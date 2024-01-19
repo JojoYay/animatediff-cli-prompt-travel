@@ -102,15 +102,24 @@ def execute_wrapper(
                 saved_file = download_video(url, save_folder)
 
             else: #tab_select2 == "Data"
-                saved_file = 'data/'+dl_video
+                if not dl_video.startswith("stylize"):
+                    saved_file = "data/" + dl_video #hmmm path is so messed up...
+                else:
+                    saved_file = dl_video
                 
             separator = os.path.sep
             video_name = os.path.splitext(os.path.normpath(saved_file.replace('/notebooks', separator)))[0].rsplit(separator, 1)[-1]
         else:
             video_name = t_name
             saved_file = None
+
+        if is_test:
+            if os.path.exists('stylize/__test_stylize__'):
+                shutil.rmtree('stylize/__test_stylize__')
+            os.makedirs('stylize/__test_stylize__')
+            
         # video_name=saved_file.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
-        stylize_dir= get_stylize_dir(video_name, str(fps))
+        stylize_dir= get_stylize_dir(video_name, str(fps),is_test)
         create_and_save_config_by_gui(
             now_str=time_str,
             video = saved_file,
@@ -194,10 +203,10 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
             # video_name=video.rsplit('.', 1)[0].rsplit('/notebooks', 1)[-1].rsplit('/', 1)[-1]
             video = Path(video).resolve()
         str_fps = str(fps)
-        stylize_dir = get_stylize_dir(video_name, str_fps)
-        stylize_fg_dir = get_fg_dir(video_name, str_fps)
-        mask_dir = get_mask_dir(video_name, str_fps)
-        stylize_bg_dir = get_bg_dir(video_name, str_fps)
+        stylize_dir = get_stylize_dir(video_name, str_fps, is_test)
+        stylize_fg_dir = get_fg_dir(video_name, str_fps, is_test)
+        mask_dir = get_mask_dir(video_name, str_fps, is_test)
+        stylize_bg_dir = get_bg_dir(video_name, str_fps, is_test)
 
         print(f"stylize_dir:{stylize_dir}")
         print(f"stylize_fg_dir:{stylize_fg_dir}")
@@ -216,7 +225,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                 print(f"Delete folder and create again")
                 shutil.rmtree(stylize_dir)
             if tab_select == 'V2V':
-                create_config(org_movie=video, fps=fps, low_vram=is_low)
+                create_config(org_movie=video, fps=fps, low_vram=is_low, out_dir=Path("stylize/") if not is_test else Path('stylize/__test_stylize__/'))
                 # !animatediff stylize create-config {video} -f {fps}
 
         # if not stylize_fg_dir.exists() and mask_ch1:
@@ -234,7 +243,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                     False,
                     None,
                 )
-        update_config(now_str, video_name, mask_ch1, tab_select, ip_image, ref_image, str_fps)
+        update_config(now_str, video_name, mask_ch1, tab_select, ip_image, ref_image, str_fps, is_test)
         config = get_config_path(now_str)
         model_config: ModelConfig = get_model_config(config)
 
@@ -410,7 +419,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
 
 def load_file(json_list):
     if json_list is None or len(json_list) == 0:
-        return None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
+        return None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
     # print(json_list)
     try:
         json_file = json.loads(json_list[0].decode('utf-8'))
@@ -524,7 +533,7 @@ def load_file(json_list):
     delete_if_exists = gr.Checkbox(value=False)
     test_run = gr.Checkbox(value=True)
 
-    return tab_select, tab_select2, url, dl_video, t_name, t_length, t_width, t_height, fps, inp_model, inp_vae, inp_mm, inp_context, inp_sche, inp_lcm, inp_hires, low_vr,inp_step, inp_cfg, seed, single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp, inp_posi, inp_pro_map, inp_neg, inp_lora1, inp_lora1_step,inp_lora2, inp_lora2_step,inp_lora3, inp_lora3_step,inp_lora4, inp_lora4_step, mo1_ch, mo1_scale, mo2_ch, mo2_scale, ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio, mask_ch1, mask_target, mask_type1, mask_padding1, ad_ch, ad_scale, op_ch, op_scale, dp_ch, dp_scale, la_ch, la_scale, me_ch, me_scale, i2i_ch, i2i_scale, ref_ch, ref_image, ref_attention, ref_gn, ref_weight, refine, re_scale, re_interpo, delete_if_exists, test_run
+    return tab_select, tab_select2, url, dl_video, t_name, t_length, t_width, t_height, fps, inp_model, inp_vae, inp_mm, inp_context, inp_sche, inp_lcm, inp_hires, low_vr,inp_step, inp_cfg, seed, single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp, inp_posi, inp_pro_map, inp_neg, inp_lora1, inp_lora1_step,inp_lora2, inp_lora2_step,inp_lora3, inp_lora3_step,inp_lora4, inp_lora4_step, mo1_ch, mo1_scale, mo2_ch, mo2_scale, ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio, mask_ch1, mask_target, mask_type1, mask_padding1, ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale, dp_ch, dp_scale, la_ch, la_scale, me_ch, me_scale, i2i_ch, i2i_scale, ref_ch, ref_image, ref_attention, ref_gn, ref_weight, refine, re_scale, re_interpo, delete_if_exists, test_run
 
 def get_key_by_value(dictionary, value):
     for key, val in dictionary.items():
@@ -580,7 +589,7 @@ def save_file(tab_select, tab_select2, url, dl_video, t_name, t_length, t_width,
     else:
         video_name = t_name
         saved_file = None
-    stylize_dir = get_stylize_dir(video_name, str(fps))
+    stylize_dir = get_stylize_dir(video_name, str(fps),test_run)
     config: ModelConfig = create_config_by_gui(
         now_str=time_str,
         video = saved_file,
@@ -615,14 +624,6 @@ def save_file(tab_select, tab_select2, url, dl_video, t_name, t_length, t_width,
         # file.write(config.json(indent=4), encoding="utf-8")
     return 'prompt.json'  # ダウンロードされるファイルのパス
 
-safetensor_files = find_safetensor_files("data/sd_models")
-lora_files = find_safetensor_files("data/lora")
-mm_files = find_safetensor_files("data/motion_modules")
-ml_files = find_safetensor_files("data/motion_lora")
-vae_choice = find_safetensor_files("data/vae")
-video_files = find_mp4_files("data/video")
-schedulers = get_schedulers()
-
 def model_rel():
     global safetensor_files
     safetensor_files = find_safetensor_files('data/sd_models')
@@ -644,14 +645,63 @@ def l_reload():
     lora_files = find_safetensor_files("data/lora")
     return gr.Dropdown(choices=lora_files)
 
+def load_video_combo():
+    dl_video_files = find_mp4_files("data/video")
+    dl_video_files2 = find_mp4_files("stylize")
+    # print(dl_video_files2)
+    dl_video_files.update(dl_video_files2)
+    return dl_video_files
+
 def video_reload():
     global video_files
-    video_files = find_mp4_files("data/video")
+    video_files = load_video_combo()
     return gr.Dropdown(choices=video_files)
 
 def clear_dropdown():
     return gr.Dropdown(value=None)
 
+def monitor_video(vid_select):
+    try:
+        global video_files
+        print("vid_select: ",vid_select)
+        print("video_path: ",video_files[vid_select])
+        video_path = video_files[vid_select]
+        if video_path is not None:
+            if video_path.startswith("video"):
+                video_path = "data/" + video_files[vid_select] #hmmm path is so messed up...
+            return gr.update(value=video_path)
+        else:
+            return gr.update(value=None)
+    except Exception as e:
+        traceback.print_exc()
+        return gr.update(value=None)
+
+def del_video(vid_select):
+    try:
+        global video_files
+        # print("video_path: ",video_files[vid_select])
+        video_path = "data/" + video_files[vid_select] #hmmm path is so messed up...
+        json_file_path = 'config/video_url.json'
+        with open(json_file_path, 'r') as file:
+            data = json.load(file)
+        updated_data = [item for item in data if item['video_name'] != vid_select]
+        with open(json_file_path, 'w') as file:
+            json.dump(updated_data, file, indent=2)
+        os.remove(video_path)
+        return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), video_reload()
+    except Exception as e:
+        traceback.print_exc()
+        return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), video_reload()
+
+safetensor_files = find_safetensor_files("data/sd_models")
+lora_files = find_safetensor_files("data/lora")
+mm_files = find_safetensor_files("data/motion_modules")
+ml_files = find_safetensor_files("data/motion_lora")
+vae_choice = find_safetensor_files("data/vae")
+# video_files = find_mp4_files("data/video")
+video_files = load_video_combo()
+schedulers = get_schedulers()
+    
 def launch():
 
     ip_choice = ["full_face", "plus_face", "plus", "light"]
@@ -675,13 +725,21 @@ def launch():
                     with gr.Tab("Existing Video") as data_tab:
                         with gr.Group():
                             with gr.Row():
-                               # with gr.Column(elem_classes=["small_area"], scale=1):
-                                    # video_cate = gr.Dropdown(choices=video_files, label="Videos", value=list(video_files.keys())[0] if list(video_files.keys()) != [] else None, scale=100)
+                                with gr.Column(scale=301):
+                                    with gr.Row():
+                                        dl_video = gr.Dropdown(choices=video_files, label="Videos", value=list(video_files.keys())[0] if list(video_files.keys()) != [] else None, scale=100)
+                                        # with gr.Column(elem_classes=["small_area"], scale=1):
+                                        vid_reload = gr.Button('🔄',elem_classes=["small_area"], scale=1)
+                                    delete_btn = gr.Button("Delete video")
+                                    with gr.Row():
+                                        confirm_btn = gr.Button("Confirm delete", variant="stop", visible=False)
+                                        cancel_btn = gr.Button("Cancel", visible=False)
 
-                                    dl_video = gr.Dropdown(choices=video_files, label="Videos", value=list(video_files.keys())[0] if list(video_files.keys()) != [] else None, scale=100)
-                                    with gr.Column(elem_classes=["small_area"], scale=1):
-                                        vid_reload = gr.Button('🔄',elem_classes=["small_btn"], scale=1)
-                                        vid_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                                    delete_btn.click(lambda :[gr.update(visible=False), gr.update(visible=True), gr.update(visible=True)], None, [delete_btn, confirm_btn, cancel_btn])
+                                    cancel_btn.click(lambda :[gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)], None, [delete_btn, confirm_btn, cancel_btn])
+                                    confirm_btn.click(fn=del_video, inputs=[dl_video], outputs=[delete_btn, confirm_btn, cancel_btn, dl_video])
+                                        # vid_del = gr.Button('🗑️',elem_classes=["small_btn"], scale=1)
+                                monitor = gr.Video(width=128, label="Video monitor", scale=100)
                     with gr.Tab("Download from URL") as url_tab:
                         url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", show_label=False)
                 with gr.Tab("T2V") as t2v_tab:
@@ -825,7 +883,7 @@ def launch():
                         with gr.Row() as me_grp:
                             me_ch = gr.Checkbox(label="Mediapipe Face", value=False)
                             me_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Mediapipe Face Weight", interactive=False)
-                        with gr.Row() as refine_grp:
+                        with gr.Row( visible=False) as refine_grp:
                             refine = gr.Checkbox(label="Refine", value=False)
                             re_scale = gr.Slider(minimum=0.05, maximum=1,  step=0.05, value=0.25, label="Tile Weight", interactive=False)
                             re_interpo = gr.Slider(minimum=1, maximum=3,  step=1, value=1, label="Interporation Mulitiplier", visible=False, interactive=False)
@@ -881,6 +939,7 @@ def launch():
 
                   outputs=[o_status, o_original, o_mask, o_depth, o_lineart, o_openpose, o_mediaface, o_front, o_front_refine, o_composite, o_final, btn])
 
+        dl_video.change(fn=monitor_video, inputs=[dl_video], outputs=[monitor])
         ip_ch.change(fn=change_ip, inputs=[ip_ch], outputs=[ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio])        
         ad_ch.change(fn=change_cn, inputs=[ad_ch], outputs=[ad_ch, ad_scale])
         tl_ch.change(fn=change_cn, inputs=[tl_ch], outputs=[tl_ch, tl_scale])
@@ -905,8 +964,8 @@ def launch():
         mm_reload.click(fn=mm_rel, outputs=[inp_mm])
         mm_del.click(fn=clear_dropdown, outputs=[inp_mm])
         vid_reload.click(fn=video_reload, outputs=[dl_video])
-        vid_del.click(fn=clear_dropdown, outputs=[dl_video])
-                                                          
+        # vid_del.click(fn=clear_dropdown, outputs=[dl_video])
+
         lora1_reload.click(fn=l_reload, outputs=[inp_lora1])
         lora1_del.click(fn=clear_dropdown, outputs=[inp_lora1])
         lora2_reload.click(fn=l_reload, outputs=[inp_lora2])

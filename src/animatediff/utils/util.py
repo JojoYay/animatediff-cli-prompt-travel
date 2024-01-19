@@ -557,7 +557,7 @@ def extract_frames(movie_file_path, fps, out_dir, aspect_ratio, duration, offset
 
     node = node.output( str(out_dir.resolve().joinpath("%08d.png")), start_number=0 )
 
-    node.run(quiet=True, overwrite_output=True)
+    node.run(quiet=False, overwrite_output=True)
 
 
 

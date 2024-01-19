@@ -60,44 +60,52 @@ def create_file_list(folder_path):
             file_list.append(file_name)
     return file_list
 
-def get_stylize_dir(video_name:str, fps:str)-> Path:
-    stylize_dir='stylize/' + video_name + "_fps" + fps
+def get_stylize_dir(video_name:str, fps:str, is_test:bool)-> Path:
+    if is_test:
+        test_folder_path = 'stylize/__test_stylize__/' + video_name + "_fps" + fps
+        stylize_dir = test_folder_path
+    else:
+        stylize_dir = 'stylize/' + video_name + "_fps" + fps
     return Path(stylize_dir)
 
-def get_fg_dir(video_name:str, fps:str) -> Path:
+def get_fg_dir(video_name:str, fps:str, is_test:bool) -> Path:
     fg_folder_name = 'fg_00_'+video_name
-    return get_stylize_dir(video_name, fps) / fg_folder_name
+    return get_stylize_dir(video_name, fps, is_test) / fg_folder_name
 
-def get_mask_dir(video_name:str, fps:str) -> Path:
-    return get_fg_dir(video_name, fps) / '00_mask'
+def get_mask_dir(video_name:str, fps:str, is_test:bool) -> Path:
+    return get_fg_dir(video_name, fps, is_test) / '00_mask'
 
-def get_bg_dir(video_name:str, fps:str) -> Path:
+def get_bg_dir(video_name:str, fps:str, is_test:bool) -> Path:
     bg_folder_name = 'bg_' + video_name
-    return get_stylize_dir(video_name, fps) / bg_folder_name
+    return get_stylize_dir(video_name, fps, is_test) / bg_folder_name
 
 def find_mp4_files(folder, suffix=''):
     result_dict = {}
-
     for root, dirs, files in os.walk(folder):
-        for file in files:
-            if file.endswith(".mp4"):
-                file_path = os.path.join(root, file)
-                folder_name = os.path.relpath(root, folder)
-                file_name = os.path.splitext(file)[0]
+        if "00_detectmap" not in root and "00_controlnet_image" not in root :
+            # print(root)
+            for file in files:
+                if file.endswith(".mp4"):
+                    file_path = os.path.join(root, file)
+                    folder_name = os.path.relpath(root, folder)
+                    file_name = os.path.splitext(file)[0]
 
-                if folder_name != ".":
-                    file_name = os.path.join(folder_name, file_name)
+                    if folder_name != ".":
+                        file_name = os.path.join(folder_name, file_name)
 
-                result_name = f"{suffix}{file_name}"
-                result_path = os.path.relpath(file_path, folder)
-                if folder.startswith("data/"):
-                    folder2 = folder[len("data/"):]
-                result_dict[result_name] = folder2+'/'+result_path
+                    result_name = f"{suffix}{file_name}"
+                    result_path = os.path.relpath(file_path, folder)
+                    if folder.startswith("data/"):
+                        folder2 = folder[len("data/"):]
+                    else:
+                        folder2 = folder
+                    result_dict[result_name] = folder2+'/'+result_path
 
-        for subdir in dirs:
-            subdir_path = os.path.join(root, subdir)
-            subdir_suffix = f"{suffix}{subdir}/" if suffix else f"{subdir}/"
-            result_dict = result_dict | find_safetensor_files(subdir_path, subdir_suffix)
+            for subdir in dirs:
+                subdir_path = os.path.join(root, subdir)
+                subdir_suffix = f"{suffix}{subdir}/" if suffix else f"{subdir}/"
+                result_dict = result_dict | find_safetensor_files(subdir_path, subdir_suffix)
+
     ordered_result = OrderedDict(sorted(result_dict.items(), key=lambda x: x[0]))
     with open('sorted_result.json', 'w', encoding='utf-8') as json_file:
         json.dump(ordered_result, json_file, ensure_ascii=False, indent=4)
@@ -122,6 +130,8 @@ def find_safetensor_files(folder, suffix=''):
                 result_path = os.path.relpath(file_path, folder)
                 if folder.startswith("data/"):
                     folder2 = folder[len("data/"):]
+                else:
+                    folder2 = folder
                 result_dict[result_name] = folder2+'/'+result_path
 
         for subdir in dirs:
@@ -748,11 +758,11 @@ def get_config_path(now_str:str) -> Path:
     config_path = config_dir.joinpath(now_str+".json")
     return config_path
     
-def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str, ip_image:PIL.Image.Image, ref_image:PIL.Image.Image, fps:str):
+def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str, ip_image:PIL.Image.Image, ref_image:PIL.Image.Image, fps:str, is_test:bool):
     config_path = get_config_path(now_str)
     model_config: ModelConfig = get_model_config(config_path)
-    stylize_dir = get_stylize_dir(video_name, fps)
-    stylize_fg_dir = get_fg_dir(video_name, fps)
+    stylize_dir = get_stylize_dir(video_name, fps, is_test)
+    stylize_fg_dir = get_fg_dir(video_name, fps, is_test)
     save_image_to_path(ip_image, stylize_dir/'00_ipadapter'/'0.png')
     save_image_to_path(ref_image, stylize_dir/'00_refonly'/'0.png')
     
