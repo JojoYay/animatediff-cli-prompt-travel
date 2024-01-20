@@ -85,7 +85,7 @@ def find_mp4_files(folder, suffix=''):
         if "00_detectmap" not in root and "00_controlnet_image" not in root :
             # print(root)
             for file in files:
-                if file.endswith(".mp4"):
+                if file.endswith(".mp4") and not file.startswith("00_"):
                     file_path = os.path.join(root, file)
                     folder_name = os.path.relpath(root, folder)
                     file_name = os.path.splitext(file)[0]

@@ -227,7 +227,8 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                 print(f"Delete folder and create again")
                 shutil.rmtree(stylize_dir)
             if tab_select == 'V2V':
-                create_config(org_movie=video, fps=fps, low_vram=is_low, out_dir=Path("stylize/") if not is_test else Path('stylize/__test_stylize__/'))
+                duration = 1 if is_test else -1
+                create_config(org_movie=video, fps=fps, low_vram=is_low, out_dir=Path("stylize/") if not is_test else Path('stylize/__test_stylize__/'), duration=duration)
                 # !animatediff stylize create-config {video} -f {fps}
 
         # if not stylize_fg_dir.exists() and mask_ch1:
@@ -254,37 +255,35 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
 
         print(f"Start: stylize generate {stylize_fg_dir}")
         print(f"test: {is_test}")
-        if is_test:
-            # if mask_ch != "As is Base":
-            if mask_ch1:
-                generate(stylize_dir=stylize_fg_dir, length=16)
-                # !animatediff stylize generate {stylize_fg_dir} -L 16
-                if bg_config is not None:
-                    generate(stylize_dir=stylize_bg_dir, length=16)
-                    # !animatediff stylize generate {stylize_bg_dir} -L 16
-                front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
-                detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-            else:
-                generate(stylize_dir=stylize_dir, length=16)
-                # !animatediff stylize generate {stylize_dir} -L 16
-                front_video = find_last_folder_and_mp4_file(stylize_dir)
-                detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
+        # if is_test:
+        #     if mask_ch1:
+        #         generate(stylize_dir=stylize_fg_dir, length=16)
+        #         # !animatediff stylize generate {stylize_fg_dir} -L 16
+        #         if bg_config is not None:
+        #             generate(stylize_dir=stylize_bg_dir, length=16)
+        #             # !animatediff stylize generate {stylize_bg_dir} -L 16
+        #         front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
+        #         detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
+        #     else:
+        #         generate(stylize_dir=stylize_dir, length=16)
+        #         # !animatediff stylize generate {stylize_dir} -L 16
+        #         front_video = find_last_folder_and_mp4_file(stylize_dir)
+        #         detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
+        # else:
+        if mask_ch1:
+            generate(stylize_dir=stylize_fg_dir)
+            # !animatediff stylize generate {stylize_fg_dir}
+            if bg_config is not None:
+                generate(stylize_dir=stylize_bg_dir)
+                # !animatediff stylize generate {stylize_bg_dir}
+            front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
+            detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
         else:
-            # if mask_ch != "As is Base":
-            if mask_ch1:
-                generate(stylize_dir=stylize_fg_dir)
-                # !animatediff stylize generate {stylize_fg_dir}
-                if bg_config is not None:
-                    generate(stylize_dir=stylize_bg_dir)
-                    # !animatediff stylize generate {stylize_bg_dir}
-                front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
-                detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-            else:
-                print(f"generate {stylize_dir} start")
-                generate(stylize_dir=stylize_dir)
-                # !animatediff stylize generate {stylize_dir}
-                front_video = find_last_folder_and_mp4_file(stylize_dir)
-                detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
+            print(f"generate {stylize_dir} start")
+            generate(stylize_dir=stylize_dir)
+            # !animatediff stylize generate {stylize_dir}
+            front_video = find_last_folder_and_mp4_file(stylize_dir)
+            detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
         print("###########################################################################################")
 
         print(f"video2: {front_video}")
@@ -421,17 +420,18 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
 
 def load_file(json_list):
     if json_list is None or len(json_list) == 0:
-        return None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
+        return None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
     # print(json_list)
     try:
         json_file = json.loads(json_list[0].decode('utf-8'))
     except:
         json_file = json.loads(json_list.decode('utf-8'))
 
-    tab_select = gr.Textbox(value=json_file.get('tab_select', None))
-    tab_select2 = gr.Textbox(value=json_file.get('tab_select2', None))
-    url = gr.Textbox(value=json_file.get('url', None))
-    dl_video = gr.Dropdown(value=get_key_by_value(video_files,json_file.get('dl_video', None)))
+    # tab_select = gr.Textbox(value=json_file.get('tab_select', None))
+    # tab_select2 = gr.Textbox(value=json_file.get('tab_select2', None))
+    # url = gr.Textbox(value=json_file.get('url', None))
+    # dl_video = gr.Dropdown(value=get_key_by_value(video_files,json_file.get('dl_video', None)))
+
     t_name = gr.Textbox(value=json_file.get('name', None))
     t_length = gr.Slider(value=json_file.get('upscale_config', {}).get('steps', None))
     t_width = gr.Slider(value=json_file.get('stylize_config', {}).get('0', {}).get('width', None))
@@ -535,7 +535,7 @@ def load_file(json_list):
     delete_if_exists = gr.Checkbox(value=False)
     test_run = gr.Checkbox(value=True)
 
-    return tab_select, tab_select2, url, dl_video, t_name, t_length, t_width, t_height, fps, inp_model, inp_vae, inp_mm, inp_context, inp_sche, inp_lcm, inp_hires, low_vr,inp_step, inp_cfg, seed, single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp, inp_posi, inp_pro_map, inp_neg, inp_lora1, inp_lora1_step,inp_lora2, inp_lora2_step,inp_lora3, inp_lora3_step,inp_lora4, inp_lora4_step, mo1_ch, mo1_scale, mo2_ch, mo2_scale, ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio, mask_ch1, mask_target, mask_type1, mask_padding1, ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale, dp_ch, dp_scale, la_ch, la_scale, me_ch, me_scale, i2i_ch, i2i_scale, ref_ch, ref_image, ref_attention, ref_gn, ref_weight, refine, re_scale, re_interpo, delete_if_exists, test_run
+    return t_name, t_length, t_width, t_height, fps, inp_model, inp_vae, inp_mm, inp_context, inp_sche, inp_lcm, inp_hires, low_vr,inp_step, inp_cfg, seed, single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp, inp_posi, inp_pro_map, inp_neg, inp_lora1, inp_lora1_step,inp_lora2, inp_lora2_step,inp_lora3, inp_lora3_step,inp_lora4, inp_lora4_step, mo1_ch, mo1_scale, mo2_ch, mo2_scale, ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio, mask_ch1, mask_target, mask_type1, mask_padding1, ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale, dp_ch, dp_scale, la_ch, la_scale, me_ch, me_scale, i2i_ch, i2i_scale, ref_ch, ref_image, ref_attention, ref_gn, ref_weight, refine, re_scale, re_interpo, delete_if_exists, test_run
 
 def get_key_by_value(dictionary, value):
     for key, val in dictionary.items():
@@ -982,7 +982,9 @@ def launch():
         
         load_btn.click(fn=load_file,
                        inputs=[json_file],
-                       outputs=[tab_select, tab_select2, url, dl_video, t_name, t_length, t_width, t_height, fps,
+                       outputs=[
+                          # tab_select, tab_select2, url, dl_video, 
+                          t_name, t_length, t_width, t_height, fps,
                           inp_model, inp_vae, 
                           inp_mm, inp_context, inp_sche, 
                           inp_lcm, inp_hires, low_vr,
