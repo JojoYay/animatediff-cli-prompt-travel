@@ -1067,8 +1067,10 @@ def create_mask(
 
     model_config: ModelConfig = get_model_config(config_org)
     original_video_path = model_config.stylize_config["original_video"]["path"]
-    match = re.search(r'(dance\d+)', original_video_path)
-    video_name = match.group(1)
+    
+    # match = re.search(r'(dance\d+)', original_video_path)
+    # video_name = match.group(1)
+    video_name = os.path.splitext(os.path.basename(original_video_path))[0]
     time_str = video_name
     if bg_config is not None:
 #    if not bg_config == 'NA':
