@@ -255,21 +255,6 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
 
         print(f"Start: stylize generate {stylize_fg_dir}")
         print(f"test: {is_test}")
-        # if is_test:
-        #     if mask_ch1:
-        #         generate(stylize_dir=stylize_fg_dir, length=16)
-        #         # !animatediff stylize generate {stylize_fg_dir} -L 16
-        #         if bg_config is not None:
-        #             generate(stylize_dir=stylize_bg_dir, length=16)
-        #             # !animatediff stylize generate {stylize_bg_dir} -L 16
-        #         front_video = find_last_folder_and_mp4_file(stylize_fg_dir)
-        #         detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-        #     else:
-        #         generate(stylize_dir=stylize_dir, length=16)
-        #         # !animatediff stylize generate {stylize_dir} -L 16
-        #         front_video = find_last_folder_and_mp4_file(stylize_dir)
-        #         detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
-        # else:
         if mask_ch1:
             generate(stylize_dir=stylize_fg_dir)
             # !animatediff stylize generate {stylize_fg_dir}
@@ -350,19 +335,15 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                 front_refine = find_last_folder_and_mp4_file(get_last_sorted_subfolder(stylize_fg_dir))
         else:
             if mask_ch1:
-            # if mask_ch != "As is Base":
                 fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_fg_dir))
-                # if mask_ch == 'Nothing Base':
                 if mask_type == 'No Background': 
                     semi_final_video = find_last_folder_and_mp4_file(stylize_fg_dir)
             else:
                 fg_result = get_first_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
                 semi_final_video = find_last_folder_and_mp4_file(stylize_dir)
 
-        # if mask_ch == "Original":
         if mask_ch1 and mask_type == 'Original': 
             yield 'composite video', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generating...", scale=1, interactive=False)
-            # yield 'composite video', pick_video(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), generate_example(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), gr.Button("Generating...", scale=1, interactive=False)
             bg_result = get_last_sorted_subfolder(stylize_bg_dir)
 
             print(f"fg_result:{fg_result}")
@@ -386,10 +367,8 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
             composite_video = find_and_get_composite_video(stylize_dir)
             
         print(f"final_video_dir: {semi_final_video}")
-
         final_dir = os.path.dirname(semi_final_video)
-        final_video = os.path.join(final_dir,  video_name + ".mp4")
-
+        final_video = os.path.join(final_dir,  video_name + "_" + now_str + ".mp4") if not is_test else os.path.join(final_dir,  video_name + "_Test_" + now_str + ".mp4")
     #    final_video_dir: stylize/dance00023/cp_2023-12-18_08-09/composite2023-12-18_08-09-41
         try:
             video = Path(video).as_posix()
@@ -403,18 +382,12 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
         except Exception as e:
             # print(f"error:{e}")
             traceback.print_exc()
-            # print(type(e))    # the exception type
-            # print(e.args)     # arguments stored in .args
-            # print(e)          # __str__ allows args to be printed directly,
             final_video = semi_final_video
             yield 'video is ready!(no music added)', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
             # yield 'video is ready!(no music added)', pick_video(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), generate_example(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), gr.Button("Generate Video", scale=1, interactive=True)
 
     except Exception as inst:
         yield 'Runtime Error', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
-        # yield 'Runtime Error', pick_video(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), generate_example(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), gr.Button("Generate Video", scale=1, interactive=True)
-        # print(type(inst))    # the exception type
-        # print(inst.args)     # arguments stored in .args
         print(inst)          # __str__ allows args to be printed directly,
         traceback.print_exc()
 
@@ -426,11 +399,6 @@ def load_file(json_list):
         json_file = json.loads(json_list[0].decode('utf-8'))
     except:
         json_file = json.loads(json_list.decode('utf-8'))
-
-    # tab_select = gr.Textbox(value=json_file.get('tab_select', None))
-    # tab_select2 = gr.Textbox(value=json_file.get('tab_select2', None))
-    # url = gr.Textbox(value=json_file.get('url', None))
-    # dl_video = gr.Dropdown(value=get_key_by_value(video_files,json_file.get('dl_video', None)))
 
     t_name = gr.Textbox(value=json_file.get('name', None))
     t_length = gr.Slider(value=json_file.get('upscale_config', {}).get('steps', None))
@@ -618,18 +586,14 @@ def save_file(tab_select, tab_select2, url, dl_video, t_name, t_length, t_width,
         tab_select=tab_select, tab_select2=tab_select2, t_name=t_name, t_length=t_length, t_width=t_width, t_height=t_height, low_vr=low_vr, 
         url=url, dl_video=dl_video
     )
-    # current_path = Path(.)
-    # current_path.write_text(config.json(indent=4), encoding="utf-8")
     
     with open('prompt.json', 'w') as file:
         file.write(config.json(indent=4))
-        # file.write(config.json(indent=4), encoding="utf-8")
-    return 'prompt.json'  # ダウンロードされるファイルのパス
+    return 'prompt.json'
 
 def model_rel():
     global safetensor_files
     safetensor_files = find_safetensor_files('data/sd_models')
-    # choice_files = None
     return gr.Dropdown(choices=safetensor_files)
 
 def vae_rel():
@@ -650,7 +614,6 @@ def l_reload():
 def load_video_combo():
     dl_video_files = find_mp4_files("data/video")
     dl_video_files2 = find_mp4_files("stylize")
-    # print(dl_video_files2)
     dl_video_files.update(dl_video_files2)
     return dl_video_files
 
@@ -682,14 +645,18 @@ def del_video(vid_select):
     try:
         global video_files
         # print("video_path: ",video_files[vid_select])
-        video_path = "data/" + video_files[vid_select] #hmmm path is so messed up...
-        json_file_path = 'config/video_url.json'
-        with open(json_file_path, 'r') as file:
-            data = json.load(file)
-        updated_data = [item for item in data if item['video_name'] != vid_select]
-        with open(json_file_path, 'w') as file:
-            json.dump(updated_data, file, indent=2)
-        os.remove(video_path)
+        video_path = video_files[vid_select] #hmmm path is so messed up...
+        if video_path.startswith("video/"):
+            video_path = "data/" + video_path #hmmm path is so messed up...
+            json_file_path = 'config/video_url.json'
+            with open(json_file_path, 'r') as file:
+                data = json.load(file)
+            updated_data = [item for item in data if item['video_name'] != vid_select]
+            with open(json_file_path, 'w') as file:
+                json.dump(updated_data, file, indent=2)
+            os.remove(video_path)
+        elif video_path.startswith("stylize/"):
+            print(video_path)
         return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), video_reload()
     except Exception as e:
         traceback.print_exc()
@@ -700,14 +667,12 @@ lora_files = find_safetensor_files("data/lora")
 mm_files = find_safetensor_files("data/motion_modules")
 ml_files = find_safetensor_files("data/motion_lora")
 vae_choice = find_safetensor_files("data/vae")
-# video_files = find_mp4_files("data/video")
 video_files = load_video_combo()
 schedulers = get_schedulers()
     
 def launch():
 
     ip_choice = ["full_face", "plus_face", "plus", "light"]
-    # bg_choice = ["Original", "Nothing Base", "As is Base"]
     mask_type_choice = ["Original", "No Background"]
     context_choice = ["uniform", "composite"]
     
@@ -901,8 +866,6 @@ def launch():
                 o_status = gr.Label(value="Not Started Yet", label="Status", scale=5)
                 # output=gr.Video(container=True)
                 with gr.Row():
-                # data_sets=gr.Dataset(components=[output], samples=[], label="Result Videos")
-                    # examples = gr.Examples(examples=video_paths, inputs=input_hidden, outputs=output, cache_examples=False)
                     o_original = gr.Video(width=128, label="Original Video", scale=1, visible=False)
                     o_mask = gr.Video(width=128, label="Mask", scale=1)
                     o_openpose = gr.Video(width=128, label="Open Pose", scale=1)
@@ -1028,8 +991,6 @@ def launch():
                           refine, re_scale, re_interpo,
                           delete_if_exists, test_run],
                        outputs=[json_file])
-
-        # data_sets.select(fn=select_video, outputs=[output])
         
     iface.queue()
     iface.launch(share=True)

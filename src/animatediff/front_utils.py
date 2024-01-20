@@ -82,16 +82,16 @@ def get_bg_dir(video_name:str, fps:str, is_test:bool) -> Path:
 def find_mp4_files(folder, suffix=''):
     result_dict = {}
     for root, dirs, files in os.walk(folder):
-        if "00_detectmap" not in root and "00_controlnet_image" not in root :
+        if "00_detectmap" not in root and "00_controlnet_image" not in root and "00_mask" not in root :
             # print(root)
             for file in files:
-                if file.endswith(".mp4") and not file.startswith("00_"):
+                if file.endswith(".mp4") and not file.startswith("00_") and not file.startswith("composite"):
                     file_path = os.path.join(root, file)
                     folder_name = os.path.relpath(root, folder)
                     file_name = os.path.splitext(file)[0]
 
-                    if folder_name != ".":
-                        file_name = os.path.join(folder_name, file_name)
+                    # if folder_name != ".":
+                    #     file_name = os.path.join(folder_name, file_name)
 
                     result_name = f"{suffix}{file_name}"
                     result_path = os.path.relpath(file_path, folder)
@@ -99,7 +99,8 @@ def find_mp4_files(folder, suffix=''):
                         folder2 = folder[len("data/"):]
                     else:
                         folder2 = folder
-                    result_dict[result_name] = folder2+'/'+result_path
+                    # result_dict[result_name] = folder2+'/'+result_path
+                    result_dict[file_name] = folder2+'/'+result_path
 
             for subdir in dirs:
                 subdir_path = os.path.join(root, subdir)
