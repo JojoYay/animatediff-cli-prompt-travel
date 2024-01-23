@@ -685,7 +685,7 @@ schedulers = get_schedulers()
 def launch():
 
     ip_choice = ["full_face", "plus_face", "plus", "light"]
-    size_choice = [512, 768, 1024, 1280, 1536]
+    size_choice = [256, 512, 768, 1024, 1280, 1536]
     mask_type_choice = ["Original", "No Background"]
     context_choice = ["uniform", "composite"]
     
@@ -729,8 +729,8 @@ def launch():
                             t_name = gr.Textbox(lines=1, label="Video Name")
                             t_length = gr.Slider(minimum=16, maximum=3840,  step=8, value=16, label="Length")
                         with gr.Row():
-                            t_width = gr.Slider(minimum=384, maximum=1360,  step=8, value=512, label="Width")
-                            t_height = gr.Slider(minimum=384, maximum=1360,  step=8, value=904, label="Height")
+                            t_width = gr.Slider(minimum=256, maximum=1360,  step=8, value=512, label="Width")
+                            t_height = gr.Slider(minimum=256, maximum=1360,  step=8, value=904, label="Height")
                     # key_prompts = gr.Textbox(lines=2, value='"0": "best quality"', label="Prompt")
                 with gr.Group():
                     with gr.Row():
