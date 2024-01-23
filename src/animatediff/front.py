@@ -770,7 +770,7 @@ def launch():
                         with gr.Row():
                             seed = gr.Number(value=-1, label="Seed")
                             inp_step = gr.Slider(minimum=1, maximum=50, step=1, value=8, label="Sampling Steps")
-                            inp_cfg = gr.Slider(minimum=0.1, maximum=20, step=0.05,  value=1.8, label="CFG Scale")
+                            inp_cfg = gr.Slider(minimum=0.1, maximum=15, step=0.05,  value=1.8, label="CFG Scale")
                     with gr.Group():
                         with gr.Row():
                             single_prompt = gr.Checkbox(label="Single Prompt Mode", value=False, visible=False)

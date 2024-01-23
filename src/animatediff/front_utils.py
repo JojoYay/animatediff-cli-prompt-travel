@@ -108,9 +108,9 @@ def find_mp4_files(folder, suffix=''):
                 result_dict = result_dict | find_safetensor_files(subdir_path, subdir_suffix)
 
     ordered_result = OrderedDict(sorted(result_dict.items(), key=lambda x: x[0]))
-    with open('sorted_result.json', 'w', encoding='utf-8') as json_file:
-        json.dump(ordered_result, json_file, ensure_ascii=False, indent=4)
-
+    # with open('sorted_result.json', 'w', encoding='utf-8') as json_file:
+    #     json.dump(ordered_result, json_file, ensure_ascii=False, indent=4)
+    
     return ordered_result
 
 
@@ -142,11 +142,12 @@ def find_safetensor_files(folder, suffix=''):
             
     # キーでソートしたOrderedDictを作成
     ordered_result = OrderedDict(sorted(result_dict.items(), key=lambda x: x[0]))
-
-    # JSONファイルに書き込み
-    with open('sorted_result.json', 'w', encoding='utf-8') as json_file:
-        json.dump(ordered_result, json_file, ensure_ascii=False, indent=4)
-
+    if folder== 'data/vae' and result_dict != {}:
+        none = {}
+        none['Auto'] = ''
+        none.update(ordered_result)
+        ordered_result = none
+        # print(ordered_result)
     return ordered_result
 
 
