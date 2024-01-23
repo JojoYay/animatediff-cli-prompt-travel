@@ -179,6 +179,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
     else:
         mask_ch1 = False
         ad_ch = False
+        tile_ch = False
         dp_ch = False
         me_ch = False
         is_test = False
@@ -372,21 +373,25 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
         final_dir = os.path.dirname(semi_final_video)
         final_video = os.path.join(final_dir,  video_name + "_" + now_str + ".mp4") if not is_test else os.path.join(final_dir,  video_name + "_Test_" + now_str + ".mp4")
     #    final_video_dir: stylize/dance00023/cp_2023-12-18_08-09/composite2023-12-18_08-09-41
-        try:
-            video = Path(video).as_posix()
-            semi_final_video = Path(semi_final_video).as_posix()
-            final_video = Path(final_video).as_posix()
-            create_video(video, semi_final_video, final_video)
-            print(f"new_file_path: {final_video}")
-
+        if tab_select == 'T2V':
+            shutil.copy(semi_final_video, final_video)
             yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
-            # yield 'video is ready!', pick_video(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), generate_example(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), gr.Button("Generate Video", scale=1, interactive=True)
-        except Exception as e:
-            # print(f"error:{e}")
-            traceback.print_exc()
-            final_video = semi_final_video
-            yield 'video is ready!(no music added)', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
-            # yield 'video is ready!(no music added)', pick_video(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), generate_example(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), gr.Button("Generate Video", scale=1, interactive=True)
+        else:
+            try:
+                video = Path(video).as_posix()
+                semi_final_video = Path(semi_final_video).as_posix()
+                final_video = Path(final_video).as_posix()
+                create_video(video, semi_final_video, final_video)
+                print(f"new_file_path: {final_video}")
+
+                yield 'video is ready!', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+                # yield 'video is ready!', pick_video(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), generate_example(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), gr.Button("Generate Video", scale=1, interactive=True)
+            except Exception as e:
+                # print(f"error:{e}")
+                traceback.print_exc()
+                final_video = semi_final_video
+                yield 'video is ready!(no music added)', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
+                # yield 'video is ready!(no music added)', pick_video(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), generate_example(original, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video), gr.Button("Generate Video", scale=1, interactive=True)
 
     except Exception as inst:
         yield 'Runtime Error', video, mask_video, depth_video, lineart_video, openpose_video, media_face_video, front_video, front_refine, composite_video, final_video, gr.Button("Generate Video", scale=1, interactive=True)
@@ -395,7 +400,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
 
 def load_file(json_list):
     if json_list is None or len(json_list) == 0:
-        return None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
+        return None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
     # print(json_list)
     try:
         json_file = json.loads(json_list[0].decode('utf-8'))
@@ -504,8 +509,9 @@ def load_file(json_list):
     re_interpo = gr.Slider(value=json_file.get('re_interpo', None))
     delete_if_exists = gr.Checkbox(value=False)
     test_run = gr.Checkbox(value=True)
+    base_size = gr.Checkbox(value=json_file.get('base_size', 512))
 
-    return t_name, t_length, t_width, t_height, fps, inp_model, inp_vae, inp_mm, inp_context, inp_sche, inp_lcm, inp_hires, low_vr,inp_step, inp_cfg, seed, single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp, inp_posi, inp_pro_map, inp_neg, inp_lora1, inp_lora1_step,inp_lora2, inp_lora2_step,inp_lora3, inp_lora3_step,inp_lora4, inp_lora4_step, mo1_ch, mo1_scale, mo2_ch, mo2_scale, ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio, mask_ch1, mask_target, mask_type1, mask_padding1, ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale, dp_ch, dp_scale, la_ch, la_scale, me_ch, me_scale, i2i_ch, i2i_scale, ref_ch, ref_image, ref_attention, ref_gn, ref_weight, refine, re_scale, re_interpo, delete_if_exists, test_run
+    return t_name, t_length, t_width, t_height, fps, base_size, inp_model, inp_vae, inp_mm, inp_context, inp_sche, inp_lcm, inp_hires, low_vr,inp_step, inp_cfg, seed, single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp, inp_posi, inp_pro_map, inp_neg, inp_lora1, inp_lora1_step,inp_lora2, inp_lora2_step,inp_lora3, inp_lora3_step,inp_lora4, inp_lora4_step, mo1_ch, mo1_scale, mo2_ch, mo2_scale, ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio, mask_ch1, mask_target, mask_type1, mask_padding1, ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale, dp_ch, dp_scale, la_ch, la_scale, me_ch, me_scale, i2i_ch, i2i_scale, ref_ch, ref_image, ref_attention, ref_gn, ref_weight, refine, re_scale, re_interpo, delete_if_exists, test_run
 
 def get_key_by_value(dictionary, value):
     for key, val in dictionary.items():
@@ -587,7 +593,7 @@ def save_file(tab_select, tab_select2, url, dl_video, t_name, t_length, t_width,
         ref_ch=ref_ch, ref_image=ref_image, ref_attention=ref_attention, ref_gn=ref_gn, ref_weight=ref_weight,
         is_refine=refine, re_scale=re_scale, re_interpo=re_interpo,
         tab_select=tab_select, tab_select2=tab_select2, t_name=t_name, t_length=t_length, t_width=t_width, t_height=t_height, low_vr=low_vr, 
-        url=url, dl_video=dl_video
+        url=url, dl_video=dl_video, base_size=base_size
     )
     
     with open('prompt.json', 'w') as file:
@@ -659,7 +665,10 @@ def del_video(vid_select):
                 json.dump(updated_data, file, indent=2)
             os.remove(video_path)
         elif video_path.startswith("stylize/"):
-            print(video_path)
+            parts = video_path.split('/')
+            index = parts.index('stylize')
+            value = parts[index + 1] if index + 1 < len(parts) else None
+            shutil.rmtree("stylize/" + value)
         return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), video_reload()
     except Exception as e:
         traceback.print_exc()
@@ -922,8 +931,8 @@ def launch():
         refine.change(fn=change_re, inputs=[refine], outputs=[refine, re_scale, re_interpo])
         i2i_ch.change(fn=change_cn, inputs=[i2i_ch], outputs=[i2i_ch, i2i_scale])
         ref_ch.change(fn=change_ref, inputs=[ref_ch], outputs=[ref_ch, ref_image, ref_attention, ref_gn, ref_weight])
-        v2v_tab.select(fn=select_v2v, outputs=[tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
-        t2v_tab.select(fn=select_t2v, outputs=[tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
+        v2v_tab.select(fn=select_v2v, outputs=[tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, tile_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
+        t2v_tab.select(fn=select_t2v, outputs=[tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, tile_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
 
         data_tab.select(fn=select_data, outputs=[tab_select2])
         url_tab.select(fn=select_url, outputs=[tab_select2])
