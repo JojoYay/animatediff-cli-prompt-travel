@@ -144,6 +144,7 @@ class ModelConfig(BaseSettings):
     dl_video:str = ""
     ip_type: str = ""
     ip_image: str = None
+    base_size: int = 512
     
     class Config(JsonConfig):
         json_config_path: Path

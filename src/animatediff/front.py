@@ -24,6 +24,7 @@ import shutil
 # Define the function signature
 def execute_wrapper(
       tab_select:str, tab_select2:str, url: str, dl_video: str, t_name: str, t_length:int, t_width:int, t_height:int, fps: int,
+      base_size: int,
       inp_model: str, inp_vae: str, 
       inp_mm: str, inp_context: str, inp_sche: str, 
       inp_lcm: bool, inp_hires: bool, low_vr: bool,
@@ -125,7 +126,7 @@ def execute_wrapper(
         create_and_save_config_by_gui(
             now_str=time_str,
             video = saved_file,
-            stylize_dir = stylize_dir, 
+            stylize_dir = stylize_dir,
             model=inp_model, vae=inp_vae, fps=fps,
             motion_module=inp_mm, context=inp_context, scheduler=inp_sche, 
             is_lcm=inp_lcm, is_hires=inp_hires,
@@ -146,13 +147,13 @@ def execute_wrapper(
             ref_ch=ref_ch, ref_image=ref_image, ref_attention=ref_attention, ref_gn=ref_gn, ref_weight=ref_weight,
             is_refine=is_refine, re_scale=re_scale, re_interpo=re_interpo,
             tab_select=tab_select, tab_select2=tab_select2, t_name=t_name, t_length=t_length, t_width=t_width, t_height=t_height, low_vr=low_vr, 
-            url=url, dl_video=dl_video
+            url=url, dl_video=dl_video, base_size=base_size
         )
 
         yield from execute_impl(tab_select=tab_select, fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
                                 is_test=is_test, is_refine=is_refine, re_scale=re_scale, re_interpo=re_interpo, 
                                 bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, mask_padding1=mask_padding1, 
-                                is_low=low_vr, t_name=t_name, ip_image=ip_image, ref_image=ref_image)
+                                is_low=low_vr, t_name=t_name, ip_image=ip_image, ref_image=ref_image, base_size=base_size)
     except Exception as inst:
         # yield 'Runtime Error', None, [], gr.Button("Generate Video", scale=1, interactive=True)
         yield 'Runtime Error', None, None, None, None, None, None, None, None, None, None, gr.Button("Generating...", scale=1, interactive=True)
@@ -166,7 +167,8 @@ def execute_wrapper(
 
     
 def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool, is_test: bool, is_refine: bool, re_scale:float, re_interpo:float,
-                 bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int, is_low:bool, t_name:str, ip_image:PIL.Image.Image, ref_image:PIL.Image.Image,):
+                 bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int, is_low:bool, t_name:str, ip_image:PIL.Image.Image, ref_image:PIL.Image.Image,
+                 base_size:int):
     if tab_select == 'V2V':
         if video.startswith("/notebooks"):
             video = video[len("/notebooks"):]
@@ -512,6 +514,7 @@ def get_key_by_value(dictionary, value):
     return None
 
 def save_file(tab_select, tab_select2, url, dl_video, t_name, t_length, t_width, t_height, fps,
+              base_size,
               inp_model, inp_vae, 
               inp_mm, inp_context, inp_sche, 
               inp_lcm, inp_hires, low_vr,
@@ -673,6 +676,7 @@ schedulers = get_schedulers()
 def launch():
 
     ip_choice = ["full_face", "plus_face", "plus", "light"]
+    size_choice = [512, 768, 1024, 1280, 1536]
     mask_type_choice = ["Original", "No Background"]
     context_choice = ["uniform", "composite"]
     
@@ -701,7 +705,6 @@ def launch():
                                     with gr.Row():
                                         confirm_btn = gr.Button("Confirm delete", variant="stop", visible=False)
                                         cancel_btn = gr.Button("Cancel", visible=False)
-
                                     delete_btn.click(lambda :[gr.update(visible=False), gr.update(visible=True), gr.update(visible=True)], None, [delete_btn, confirm_btn, cancel_btn])
                                     cancel_btn.click(lambda :[gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)], None, [delete_btn, confirm_btn, cancel_btn])
                                     confirm_btn.click(fn=del_video, inputs=[dl_video], outputs=[delete_btn, confirm_btn, cancel_btn, dl_video])
@@ -709,6 +712,8 @@ def launch():
                                 monitor = gr.Video(width=128, label="Video monitor", scale=100)
                     with gr.Tab("Download from URL") as url_tab:
                         url = gr.Textbox(lines=1, value="https://www.tiktok.com/@ai_hinahina/video/7313863412541361426", show_label=False)
+                    with gr.Row():
+                        base_size = gr.Radio(choices=size_choice, label="Base Size", value=512)
                 with gr.Tab("T2V") as t2v_tab:
                     with gr.Group():
                         with gr.Row():
@@ -880,6 +885,7 @@ def launch():
 
         btn.click(fn=execute_wrapper,
                   inputs=[tab_select, tab_select2, url, dl_video, t_name, t_length, t_width, t_height, fps,
+                          base_size,
                           inp_model, inp_vae, 
                           inp_mm, inp_context, inp_sche, 
                           inp_lcm, inp_hires, low_vr,
@@ -948,7 +954,8 @@ def launch():
                        outputs=[
                           # tab_select, tab_select2, url, dl_video, 
                           t_name, t_length, t_width, t_height, fps,
-                          inp_model, inp_vae, 
+                          base_size,
+                          inp_model, inp_vae,
                           inp_mm, inp_context, inp_sche, 
                           inp_lcm, inp_hires, low_vr,
                           inp_step, inp_cfg, seed,
@@ -970,26 +977,27 @@ def launch():
                           delete_if_exists, test_run])
         save_btn.click(fn=save_file,
                        inputs=[tab_select, tab_select2, url, dl_video, t_name, t_length, t_width, t_height, fps,
-                          inp_model, inp_vae, 
-                          inp_mm, inp_context, inp_sche, 
-                          inp_lcm, inp_hires, low_vr,
-                          inp_step, inp_cfg, seed,
-                          single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp,
-                          inp_posi, inp_pro_map, inp_neg, 
-                          inp_lora1, inp_lora1_step,
-                          inp_lora2, inp_lora2_step,
-                          inp_lora3, inp_lora3_step,
-                          inp_lora4, inp_lora4_step,
-                          mo1_ch, mo1_scale,
-                          mo2_ch, mo2_scale,
-                          ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
-                          mask_ch1, mask_target, mask_type1, mask_padding1,
-                          ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
-                          dp_ch, dp_scale, la_ch, la_scale,
-                          me_ch, me_scale, i2i_ch, i2i_scale,
-                          ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
-                          refine, re_scale, re_interpo,
-                          delete_if_exists, test_run],
+                            base_size,
+                            inp_model, inp_vae, 
+                            inp_mm, inp_context, inp_sche, 
+                            inp_lcm, inp_hires, low_vr,
+                            inp_step, inp_cfg, seed,
+                            single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp,
+                            inp_posi, inp_pro_map, inp_neg, 
+                            inp_lora1, inp_lora1_step,
+                            inp_lora2, inp_lora2_step,
+                            inp_lora3, inp_lora3_step,
+                            inp_lora4, inp_lora4_step,
+                            mo1_ch, mo1_scale,
+                            mo2_ch, mo2_scale,
+                            ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
+                            mask_ch1, mask_target, mask_type1, mask_padding1,
+                            ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
+                            dp_ch, dp_scale, la_ch, la_scale,
+                            me_ch, me_scale, i2i_ch, i2i_scale,
+                            ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
+                            refine, re_scale, re_interpo,
+                            delete_if_exists, test_run],
                        outputs=[json_file])
         
     iface.queue()

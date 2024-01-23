@@ -420,7 +420,7 @@ def create_and_save_config_by_gui(
     ref_ch: bool, ref_image:  PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
     is_refine: bool, re_scale: float, re_interpo: float,
     tab_select: str, tab_select2: str, t_name: str, t_length: int, t_width: int, t_height: int, low_vr: bool, 
-    url: str, dl_video: str
+    url: str, dl_video: str, base_size:int
 ):
     model_config = create_config_by_gui(
     now_str,
@@ -446,7 +446,7 @@ def create_and_save_config_by_gui(
     ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
     is_refine, re_scale, re_interpo,
     tab_select, tab_select2, t_name, t_length, t_width, t_height, low_vr, 
-    url, dl_video)
+    url, dl_video, base_size)
         
     save_config_path = get_config_path(now_str)
     save_config_path.write_text(model_config.json(indent=4), encoding="utf-8")
@@ -475,7 +475,7 @@ def create_config_by_gui(
     ref_ch: bool, ref_image:  PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
     is_refine: bool, re_scale: float, re_interpo: float,
     tab_select: str, tab_select2: str, t_name: str, t_length: int, t_width: int, t_height: int, low_vr: bool, 
-    url: str, dl_video: str
+    url: str, dl_video: str, base_size:int
 ) -> ModelConfig:
     data_dir = get_dir("data")
     org_config='config/fix/real_base2.json'
@@ -554,6 +554,7 @@ def create_config_by_gui(
     print(f"low_vr: {low_vr}")
     print(f"url: {url}")
     print(f"dl_video: {dl_video}")
+    print(f"base_size: {base_size}")
     
     model_config.name = now_str
     model_config.path = Path(model)
@@ -667,6 +668,7 @@ def create_config_by_gui(
     model_config.dl_video = dl_video
     model_config.ip_type = ip_type
     model_config.ip_image = image_to_base64(ip_image)
+    model_config.base_size = base_size
         
     # model_config.controlnet_map["input_image_dir"] = stylize_dir/'00_controlnet_image'
     # model_config.controlnet_map["input_image_dir"] = os.path.relpath((stylize_dir/'00_controlnet_image').absolute(), data_dir)
@@ -772,15 +774,18 @@ def update_config(now_str:str, video_name:str, mask_ch:bool, tab_select:str, ip_
         img = Image.open( img2img_dir.joinpath("00000000.png") )
         W, H = img.size
         gradual_latent_hires_fix = model_config.gradual_latent_hires_fix_map["enable"]
-        base_size = 768 if gradual_latent_hires_fix else 512
+        # base_size = 768 if gradual_latent_hires_fix else 512
+        base_size = model_config.base_size
         if W < H:
             width = base_size
             height = int(base_size * H/W)
         else:
             width = int(base_size * W/H)
             height = base_size
-        width = int(width//8*8)
-        height = int(height//8*8)
+        width = round(width / 8) * 8    
+        height = round(height / 8) * 8    
+        # width = int(width//8*8)
+        # height = int(height//8*8)
         length = len(glob.glob( os.path.join(img2img_dir, "[0-9]*.png"), recursive=False))
         model_config.stylize_config["0"]= {
                     "width": width,
