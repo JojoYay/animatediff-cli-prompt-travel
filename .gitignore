@@ -243,3 +243,5 @@ src/animatediff/_version.py
 #mp3/mp4
 *.mp3
 *.mp4
+
+prompt.json
