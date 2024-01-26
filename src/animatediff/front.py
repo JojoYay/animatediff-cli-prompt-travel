@@ -4,7 +4,7 @@ from animatediff.front_utils import (get_schedulers, getNow, download_video,
                                     find_safetensor_files, find_last_folder_and_mp4_file, find_next_available_number,
                                     find_and_get_composite_video, load_video_name, get_last_sorted_subfolder,
                                     create_config_by_gui, create_and_save_config_by_gui, get_config_path, update_config, change_ip, change_cn, change_ref, change_mask, get_first_sorted_subfolder, get_stylize_dir, get_fg_dir,
-                                    get_mask_dir, get_bg_dir, select_v2v, select_t2v, select_data, select_url, select_video, pick_video, generate_example, change_re, find_mp4_files, base64_to_image)
+                                    get_mask_dir, get_bg_dir, select_v2v, select_t2v, select_data, select_url, select_video, pick_video, generate_example, find_mp4_files, base64_to_image)
 from animatediff.settings import ModelConfig, get_model_config
 from animatediff.video_utils import create_video
 from animatediff.generate import save_output
@@ -40,10 +40,13 @@ def execute_wrapper(
       ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str, ip_image_ratio:float,
       mask_ch1: bool, mask_target:str, mask_type1: str, mask_padding1:int,
       ad_ch: bool, ad_scale: float, tl_ch:bool, tl_scale:float, op_ch: bool, op_scale: float,
-      dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
+      dp_ch: bool, dp_scale: float, 
+      ip2p_ch: bool, ip2p_scale: float, sh_ch: bool, sh_scale: float, mlsd_ch: bool, mlsd_scale: float,
+      bae_ch: bool, bae_scale: float, sc_ch: bool, sc_scale: float, se_ch: bool, se_scale: float,
+      la_ch: bool, la_scale: float,
       me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
       ref_ch: bool, ref_image: PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
-      is_refine: bool, re_scale: float, re_interpo: float,
+      # is_refine: bool, re_scale: float, re_interpo: float,
       delete_if_exists: bool, is_test: bool
     ):
     
@@ -59,7 +62,7 @@ def execute_wrapper(
     mo2_ch = ml_files[mo2_ch] if mo2_ch is not None and mo2_ch != [] else None
     dl_video = video_files[dl_video] if dl_video != [] else None
     
-    ref_ch = False #no more refine... just generate it again with result
+    ref_ch = False
     
     yield 'generation Initiated...', None, None, None, None, None, None, None, None, None, None, gr.Button("Generating...", scale=1, interactive=False)
     # yield 'generation Initiated...', None, [], gr.Button("Generating...", scale=1, interactive=False)
@@ -142,16 +145,20 @@ def execute_wrapper(
             mask_ch1=mask_ch1, mask_target=mask_target, mask_type1=mask_type1, mask_padding1=mask_padding1,
             ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,ip_image_ratio=ip_image_ratio,
             ad_ch=ad_ch, ad_scale=ad_scale, tl_ch=tl_ch, tl_scale=tl_scale, op_ch=op_ch, op_scale=op_scale,
-            dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
+            dp_ch=dp_ch, dp_scale=dp_scale, 
+            ip2p_ch=ip2p_ch, ip2p_scale=ip2p_scale, sh_ch=sh_ch, sh_scale=sh_scale, mlsd_ch=mlsd_ch, mlsd_scale=mlsd_scale,
+            bae_ch=bae_ch, bae_scale=bae_scale, sc_ch=sc_ch, sc_scale=sc_scale, se_ch=se_ch, se_scale=se_scale,
+            la_ch=la_ch, la_scale=la_scale,
             me_ch=me_ch, me_scale=me_scale, i2i_ch=i2i_ch, i2i_scale=i2i_scale,
             ref_ch=ref_ch, ref_image=ref_image, ref_attention=ref_attention, ref_gn=ref_gn, ref_weight=ref_weight,
-            is_refine=is_refine, re_scale=re_scale, re_interpo=re_interpo,
+            # is_refine=is_refine, re_scale=re_scale, re_interpo=re_interpo,
             tab_select=tab_select, tab_select2=tab_select2, t_name=t_name, t_length=t_length, t_width=t_width, t_height=t_height, low_vr=low_vr, 
             url=url, dl_video=dl_video, base_size=base_size
         )
 
         yield from execute_impl(tab_select=tab_select, fps=fps,now_str=time_str,video=saved_file, delete_if_exists=delete_if_exists,
-                                is_test=is_test, is_refine=is_refine, re_scale=re_scale, re_interpo=re_interpo, 
+                                is_test=is_test, 
+                                # is_refine=False, re_scale=re_scale, re_interpo=re_interpo, 
                                 bg_config=bg_config, mask_ch1=mask_ch1, mask_type=mask_type1, mask_padding1=mask_padding1, 
                                 is_low=low_vr, t_name=t_name, ip_image=ip_image, ref_image=ref_image, base_size=base_size)
     except Exception as inst:
@@ -166,9 +173,11 @@ def execute_wrapper(
     print(f"実行時間: {execution_time}秒")
 
     
-def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool, is_test: bool, is_refine: bool, re_scale:float, re_interpo:float,
+def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool, is_test: bool, 
+                 # is_refine: bool, re_scale:float, re_interpo:float,
                  bg_config: str, fps:int, mask_ch1: bool, mask_type: str, mask_padding1:int, is_low:bool, t_name:str, ip_image:PIL.Image.Image, ref_image:PIL.Image.Image,
                  base_size:int):
+    is_refine = False
     if tab_select == 'V2V':
         if video.startswith("/notebooks"):
             video = video[len("/notebooks"):]
@@ -194,6 +203,12 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
         lineart_video = None
         openpose_video = None
         media_face_video = None
+        
+        mlsd_video = None
+        bae_video = None
+        scribble_video = None
+        softedge_video = None
+        
         front_video = None
         front_refine = None
         composite_video = None
@@ -272,16 +287,13 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
             # !animatediff stylize generate {stylize_dir}
             front_video = find_last_folder_and_mp4_file(stylize_dir)
             detect_map = get_last_sorted_subfolder(get_last_sorted_subfolder(stylize_dir))
-        print("###########################################################################################")
-
         print(f"video2: {front_video}")
         print(f"detect_map:{detect_map}")
         subfolders = [f.path for f in os.scandir(Path(detect_map)) if f.is_dir()]
         print(f"cn_folders: {subfolders}")
         for cn_folder in subfolders:
-            # フォルダ名が "animate_diff" でない場合の処理
             print(f"cn_folder: {cn_folder}")
-            if os.path.basename(cn_folder) != "animatediff_controlnet" and os.path.basename(cn_folder) != "controlnet_ref":
+            if os.path.basename(cn_folder) != "animatediff_controlnet" and os.path.basename(cn_folder) != "controlnet_ip2p" and os.path.basename(cn_folder) != "controlnet_tile":
                 filename = Path(cn_folder + '/' + os.path.basename(cn_folder)+'.mp4')
                 save_output(
                     None,
@@ -301,6 +313,15 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
                     openpose_video = filename
                 if os.path.basename(cn_folder) == "controlnet_mediapipe_face":
                     media_face_video = filename
+
+                if os.path.basename(cn_folder) == "controlnet_mlsd":
+                    mlsd_video = filename
+                if os.path.basename(cn_folder) == "controlnet_normalbae":
+                    bae_face_video = filename
+                if os.path.basename(cn_folder) == "controlnet_scribble":
+                    scribble_video = filename
+                if os.path.basename(cn_folder) == "controlnet_softedge":
+                    softedge_video = filename
 
         if is_refine:
             cur_width = model_config.stylize_config["0"]["width"]
@@ -400,7 +421,7 @@ def execute_impl(tab_select:str, now_str:str, video: str, delete_if_exists: bool
 
 def load_file(json_list):
     if json_list is None or len(json_list) == 0:
-        return None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
+        return None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
     # print(json_list)
     try:
         json_file = json.loads(json_list[0].decode('utf-8'))
@@ -493,6 +514,20 @@ def load_file(json_list):
     op_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_openpose', {}).get('controlnet_conditioning_scale', None))
     dp_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_depth', {}).get('enable', False))
     dp_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_depth', {}).get('controlnet_conditioning_scale', None))
+
+    ip2p_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_ip2p', {}).get('enable', False))
+    ip2p_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_ip2p', {}).get('controlnet_conditioning_scale', None))
+    sh_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_shuffle', {}).get('enable', False))
+    sh_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_shuffle', {}).get('controlnet_conditioning_scale', None))
+    mlsd_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_mlsd', {}).get('enable', False))
+    mlsd_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_mlsd', {}).get('controlnet_conditioning_scale', None))
+    bae_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_normalbae', {}).get('enable', False))
+    bae_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_normalbae', {}).get('controlnet_conditioning_scale', None))
+    sc_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_scribble', {}).get('enable', False))
+    sc_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_scribble', {}).get('controlnet_conditioning_scale', None))
+    se_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_softedge', {}).get('enable', False))
+    se_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_softedge', {}).get('controlnet_conditioning_scale', None))
+
     la_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_lineart', {}).get('enable', False))
     la_scale = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_lineart', {}).get('controlnet_conditioning_scale', None))
     me_ch = gr.Checkbox(value=json_file.get('controlnet_map', {}).get('controlnet_mediapipe_face', {}).get('enable', False))
@@ -504,14 +539,41 @@ def load_file(json_list):
     ref_gn = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_ref', {}).get('gn_auto_machine_weight', None))
     ref_weight = gr.Slider(value=json_file.get('controlnet_map', {}).get('controlnet_ref', {}).get('style_fidelity', None))
     ref_image = gr.Image(height=128)
-    refine = gr.Checkbox(value=json_file.get('refine', False))
-    re_scale = gr.Slider(value=json_file.get('re_scale', None))
-    re_interpo = gr.Slider(value=json_file.get('re_interpo', None))
+    # refine = gr.Checkbox(value=json_file.get('refine', False))
+    # re_scale = gr.Slider(value=json_file.get('re_scale', None))
+    # re_interpo = gr.Slider(value=json_file.get('re_interpo', None))
     delete_if_exists = gr.Checkbox(value=False)
     test_run = gr.Checkbox(value=True)
     base_size = gr.Checkbox(value=json_file.get('base_size', 512))
 
-    return t_name, t_length, t_width, t_height, fps, base_size, inp_model, inp_vae, inp_mm, inp_context, inp_sche, inp_lcm, inp_hires, low_vr,inp_step, inp_cfg, seed, single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp, inp_posi, inp_pro_map, inp_neg, inp_lora1, inp_lora1_step,inp_lora2, inp_lora2_step,inp_lora3, inp_lora3_step,inp_lora4, inp_lora4_step, mo1_ch, mo1_scale, mo2_ch, mo2_scale, ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio, mask_ch1, mask_target, mask_type1, mask_padding1, ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale, dp_ch, dp_scale, la_ch, la_scale, me_ch, me_scale, i2i_ch, i2i_scale, ref_ch, ref_image, ref_attention, ref_gn, ref_weight, refine, re_scale, re_interpo, delete_if_exists, test_run
+    # return t_name, t_length, t_width, t_height, fps, base_size, inp_model, inp_vae, inp_mm, inp_context, inp_sche, inp_lcm, inp_hires, low_vr,inp_step, inp_cfg, seed, single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp, inp_posi, inp_pro_map, inp_neg, inp_lora1, inp_lora1_step,inp_lora2, inp_lora2_step,inp_lora3, inp_lora3_step,inp_lora4, inp_lora4_step, mo1_ch, mo1_scale, mo2_ch, mo2_scale, ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio, mask_ch1, mask_target, mask_type1, mask_padding1, ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale, dp_ch, dp_scale, la_ch, la_scale, me_ch, me_scale, i2i_ch, i2i_scale, ref_ch, ref_image, ref_attention, ref_gn, ref_weight, delete_if_exists, test_run
+    return (
+        t_name, t_length, t_width, t_height, fps, 
+        base_size, 
+        inp_model, inp_vae, 
+        inp_mm, inp_context, inp_sche, 
+        inp_lcm, inp_hires, low_vr, 
+        inp_step, inp_cfg, seed, 
+        single_prompt, prompt_fixed_ratio, tensor_interpolation_slerp, 
+        inp_posi, inp_pro_map, inp_neg, 
+        inp_lora1, inp_lora1_step, 
+        inp_lora2, inp_lora2_step, 
+        inp_lora3, inp_lora3_step, 
+        inp_lora4, inp_lora4_step, 
+        mo1_ch, mo1_scale, 
+        mo2_ch, mo2_scale, 
+        ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio, 
+        mask_ch1, mask_target, mask_type1, mask_padding1, 
+        ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale, 
+        dp_ch, dp_scale, 
+        ip2p_ch, ip2p_scale, sh_ch, sh_scale, mlsd_ch, mlsd_scale,
+        bae_ch, bae_scale, sc_ch, sc_scale, se_ch, se_scale,
+        la_ch, la_scale, 
+        me_ch, me_scale, i2i_ch, i2i_scale, 
+        ref_ch, ref_image, ref_attention, ref_gn, ref_weight, 
+        # refine, re_scale, re_interpo,
+        delete_if_exists, test_run
+    )
 
 def get_key_by_value(dictionary, value):
     for key, val in dictionary.items():
@@ -525,7 +587,7 @@ def save_file(tab_select, tab_select2, url, dl_video, t_name, t_length, t_width,
               inp_mm, inp_context, inp_sche, 
               inp_lcm, inp_hires, low_vr,
               inp_step, inp_cfg, seed,
-              single_prompt, prompt_fixed_ratio,tensor_interpolation_slerp,
+              single_prompt, prompt_fixed_ratio, tensor_interpolation_slerp,
               inp_posi, inp_pro_map, inp_neg, 
               inp_lora1, inp_lora1_step,
               inp_lora2, inp_lora2_step,
@@ -536,10 +598,13 @@ def save_file(tab_select, tab_select2, url, dl_video, t_name, t_length, t_width,
               ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
               mask_ch1, mask_target, mask_type1, mask_padding1,
               ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
-              dp_ch, dp_scale, la_ch, la_scale,
+              dp_ch, dp_scale, 
+              ip2p_ch, ip2p_scale, sh_ch, sh_scale, mlsd_ch, mlsd_scale,
+              bae_ch, bae_scale, sc_ch, sc_scale, se_ch, se_scale,
+              la_ch, la_scale,
               me_ch, me_scale, i2i_ch, i2i_scale,
               ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
-              refine, re_scale, re_interpo,
+              # refine, re_scale, re_interpo,
               delete_if_exists, test_run):
 
     inp_model = safetensor_files[inp_model] if inp_model!= [] else None
@@ -588,10 +653,13 @@ def save_file(tab_select, tab_select2, url, dl_video, t_name, t_length, t_width,
         mask_ch1=mask_ch1, mask_target=mask_target, mask_type1=mask_type1, mask_padding1=mask_padding1,
         ip_ch=ip_ch, ip_image=ip_image, ip_scale=ip_scale, ip_type=ip_type,ip_image_ratio=ip_image_ratio,
         ad_ch=ad_ch, ad_scale=ad_scale, tl_ch=tl_ch, tl_scale=tl_scale, op_ch=op_ch, op_scale=op_scale,
-        dp_ch=dp_ch, dp_scale=dp_scale, la_ch=la_ch, la_scale=la_scale,
+        dp_ch=dp_ch, dp_scale=dp_scale, 
+        ip2p_ch=ip2p_ch, ip2p_scale=ip2p_scale, sh_ch=sh_ch, sh_scale=sh_scale, mlsd_ch=mlsd_ch, mlsd_scale=mlsd_scale,
+        bae_ch=bae_ch, bae_scale=bae_scale, sc_ch=sc_ch, sc_scale=sc_scale, se_ch=se_ch, se_scale=se_scale,
+        la_ch=la_ch, la_scale=la_scale,
         me_ch=me_ch, me_scale=me_scale, i2i_ch=i2i_ch, i2i_scale=i2i_scale,
         ref_ch=ref_ch, ref_image=ref_image, ref_attention=ref_attention, ref_gn=ref_gn, ref_weight=ref_weight,
-        is_refine=refine, re_scale=re_scale, re_interpo=re_interpo,
+        # is_refine=refine, re_scale=re_scale, re_interpo=re_interpo,
         tab_select=tab_select, tab_select2=tab_select2, t_name=t_name, t_length=t_length, t_width=t_width, t_height=t_height, low_vr=low_vr, 
         url=url, dl_video=dl_video, base_size=base_size
     )
@@ -858,16 +926,36 @@ def launch():
                         with gr.Row() as dp_grp:
                             dp_ch = gr.Checkbox(label="Depth", value=False)
                             dp_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Depth Weight", interactive=False)
+
+                        with gr.Row() as ip2p_grp:
+                            ip2p_ch = gr.Checkbox(label="IP2P", value=False)
+                            ip2p_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="IP2P Weight", interactive=False)
+                        with gr.Row() as sh_grp:
+                            sh_ch = gr.Checkbox(label="Shuffle", value=False)
+                            sh_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Shuffle Weight", interactive=False)
+                        with gr.Row() as mlsd_grp:
+                            mlsd_ch = gr.Checkbox(label="MLSD", value=False)
+                            mlsd_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="MLSD Weight", interactive=False)
+                        with gr.Row() as bae_grp:
+                            bae_ch = gr.Checkbox(label="Normalbae", value=False)
+                            bae_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Normalbae Weight", interactive=False)
+                        with gr.Row() as sc_grp:
+                            sc_ch = gr.Checkbox(label="Scribble", value=False)
+                            sc_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Scribble Weight", interactive=False)
+                        with gr.Row() as se_grp:
+                            se_ch = gr.Checkbox(label="Softedge", value=False)
+                            se_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Softedge Weight", interactive=False)
+
                         with gr.Row() as la_grp:
                             la_ch = gr.Checkbox(label="Lineart", value=False)
                             la_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Lineart Weight", interactive=False)
                         with gr.Row() as me_grp:
                             me_ch = gr.Checkbox(label="Mediapipe Face", value=False)
                             me_scale = gr.Slider(minimum=0, maximum=1,  step=0.05, value=0.5, label="Mediapipe Face Weight", interactive=False)
-                        with gr.Row( visible=False) as refine_grp:
-                            refine = gr.Checkbox(label="Refine", value=False)
-                            re_scale = gr.Slider(minimum=0.05, maximum=1,  step=0.05, value=0.25, label="Tile Weight", interactive=False)
-                            re_interpo = gr.Slider(minimum=1, maximum=3,  step=1, value=1, label="Interporation Mulitiplier", visible=False, interactive=False)
+                        # with gr.Row( visible=False) as refine_grp:
+                        #     refine = gr.Checkbox(label="Refine", value=False)
+                        #     re_scale = gr.Slider(minimum=0.05, maximum=1,  step=0.05, value=0.25, label="Tile Weight", interactive=False)
+                        #     re_interpo = gr.Slider(minimum=1, maximum=3,  step=1, value=1, label="Interporation Mulitiplier", visible=False, interactive=False)
                             # re_ad_scale = gr.Slider(minimum=0.05, maximum=1,  step=0.05, value=0.75, label="AD Weight", interactive=False)
 
                     with gr.Row():
@@ -910,10 +998,13 @@ def launch():
                           ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
                           mask_ch1, mask_target, mask_type1, mask_padding1,
                           ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
-                          dp_ch, dp_scale, la_ch, la_scale,
+                          dp_ch, dp_scale, 
+                          ip2p_ch, ip2p_scale, sh_ch, sh_scale, mlsd_ch, mlsd_scale,
+                          bae_ch, bae_scale, sc_ch, sc_scale, se_ch, se_scale,
+                          la_ch, la_scale,
                           me_ch, me_scale, i2i_ch, i2i_scale,
                           ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
-                          refine, re_scale, re_interpo,
+                          # refine, re_scale, re_interpo,
                           delete_if_exists, test_run],
                   # outputs=[o_status, output, data_sets, btn])
 
@@ -925,14 +1016,22 @@ def launch():
         tl_ch.change(fn=change_cn, inputs=[tl_ch], outputs=[tl_ch, tl_scale])
         op_ch.change(fn=change_cn, inputs=[op_ch], outputs=[op_ch, op_scale])
         dp_ch.change(fn=change_cn, inputs=[dp_ch], outputs=[dp_ch, dp_scale])
+
+        ip2p_ch.change(fn=change_cn, inputs=[ip2p_ch], outputs=[ip2p_ch, ip2p_scale])
+        sh_ch.change(fn=change_cn, inputs=[sh_ch], outputs=[sh_ch, sh_scale])
+        mlsd_ch.change(fn=change_cn, inputs=[mlsd_ch], outputs=[mlsd_ch, mlsd_scale])
+        bae_ch.change(fn=change_cn, inputs=[bae_ch], outputs=[bae_ch, bae_scale])
+        sc_ch.change(fn=change_cn, inputs=[sc_ch], outputs=[sc_ch, sc_scale])
+        se_ch.change(fn=change_cn, inputs=[se_ch], outputs=[se_ch, se_scale])
+
         la_ch.change(fn=change_cn, inputs=[la_ch], outputs=[la_ch, la_scale])
         mask_ch1.change(fn=change_mask, inputs=[mask_ch1], outputs=[mask_ch1, mask_target, mask_type1, mask_padding1])
         me_ch.change(fn=change_cn, inputs=[me_ch], outputs=[me_ch, me_scale])
-        refine.change(fn=change_re, inputs=[refine], outputs=[refine, re_scale, re_interpo])
+        # refine.change(fn=change_re, inputs=[refine], outputs=[refine, re_scale, re_interpo])
         i2i_ch.change(fn=change_cn, inputs=[i2i_ch], outputs=[i2i_ch, i2i_scale])
         ref_ch.change(fn=change_ref, inputs=[ref_ch], outputs=[ref_ch, ref_image, ref_attention, ref_gn, ref_weight])
-        v2v_tab.select(fn=select_v2v, outputs=[tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, tile_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
-        t2v_tab.select(fn=select_t2v, outputs=[tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, tile_grp, op_grp, dp_grp, la_grp, me_grp, test_run, delete_if_exists])
+        v2v_tab.select(fn=select_v2v, outputs=[tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, tile_grp, op_grp, dp_grp, ip2p_grp, sh_grp, mlsd_grp, bae_grp, sc_grp, se_grp, la_grp, me_grp, test_run, delete_if_exists])
+        t2v_tab.select(fn=select_t2v, outputs=[tab_select, btn, mask_grp1, mask_grp2, i2i_grp, ad_grp, tile_grp, op_grp, dp_grp, ip2p_grp, sh_grp, mlsd_grp, bae_grp, sc_grp, se_grp, la_grp, me_grp, test_run, delete_if_exists])
 
         data_tab.select(fn=select_data, outputs=[tab_select2])
         url_tab.select(fn=select_url, outputs=[tab_select2])
@@ -979,10 +1078,13 @@ def launch():
                           ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
                           mask_ch1, mask_target, mask_type1, mask_padding1,
                           ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
-                          dp_ch, dp_scale, la_ch, la_scale,
+                          dp_ch, dp_scale, 
+                          ip2p_ch, ip2p_scale, sh_ch, sh_scale, mlsd_ch, mlsd_scale,
+                          bae_ch, bae_scale, sc_ch, sc_scale, se_ch, se_scale,
+                          la_ch, la_scale,
                           me_ch, me_scale, i2i_ch, i2i_scale,
                           ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
-                          refine, re_scale, re_interpo,
+                          # refine, re_scale, re_interpo,
                           delete_if_exists, test_run])
         save_btn.click(fn=save_file,
                        inputs=[tab_select, tab_select2, url, dl_video, t_name, t_length, t_width, t_height, fps,
@@ -1002,10 +1104,13 @@ def launch():
                             ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
                             mask_ch1, mask_target, mask_type1, mask_padding1,
                             ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
-                            dp_ch, dp_scale, la_ch, la_scale,
+                            dp_ch, dp_scale,
+                            ip2p_ch, ip2p_scale, sh_ch, sh_scale, mlsd_ch, mlsd_scale,
+                            bae_ch, bae_scale, sc_ch, sc_scale, se_ch, se_scale,
+                            la_ch, la_scale,
                             me_ch, me_scale, i2i_ch, i2i_scale,
                             ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
-                            refine, re_scale, re_interpo,
+                            # refine, re_scale, re_interpo,
                             delete_if_exists, test_run],
                        outputs=[json_file])
         

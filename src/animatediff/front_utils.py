@@ -280,11 +280,11 @@ def change_ref(enable):
     ref_weight = gr.Slider(interactive=enable)
     return ref_ch, ref_image, ref_attention, ref_gn, ref_weight
 
-def change_re(enable):
-    refine = gr.Checkbox(value=enable)
-    re_scale = gr.Slider(interactive=enable)
-    re_interpo = gr.Slider(interactive=enable)
-    return refine, re_scale, re_interpo
+# def change_re(enable):
+#     refine = gr.Checkbox(value=enable)
+#     re_scale = gr.Slider(interactive=enable)
+#     re_interpo = gr.Slider(interactive=enable)
+#     return refine, re_scale, re_interpo
 
 def change_mask(enable):
     mask_ch1 = gr.Checkbox(value=enable)
@@ -297,13 +297,13 @@ def select_v2v():
     tab_select = gr.Textbox(lines=1, value='V2V', show_label=False)
     btn = gr.Button("Generate V2V", scale=1)
     upd = gr.update(visible=True)
-    return tab_select, btn, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd
+    return tab_select, btn, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd
 
 def select_t2v():
     tab_select = gr.Textbox(lines=1, value='T2V', show_label=False)
     btn = gr.Button("Generate T2V", scale=1)
     upd = gr.update(visible=False)
-    return tab_select, btn, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd
+    return tab_select, btn, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd, upd
 
 def select_data():
     tab_select = gr.Textbox(lines=1, value='Data', show_label=False)
@@ -398,10 +398,13 @@ def create_and_save_config_by_gui(
     mask_ch1: bool, mask_target: str, mask_type1: str, mask_padding1: int,
     ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str, ip_image_ratio: float,
     ad_ch: bool, ad_scale: float, tl_ch: bool, tl_scale: float, op_ch: bool, op_scale: float,
-    dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
+    dp_ch: bool, dp_scale: float, 
+    ip2p_ch: bool, ip2p_scale: float, sh_ch: bool, sh_scale: float, mlsd_ch: bool, mlsd_scale: float,
+    bae_ch: bool, bae_scale: float, sc_ch: bool, sc_scale: float, se_ch: bool, se_scale: float,
+    la_ch: bool, la_scale: float,
     me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
     ref_ch: bool, ref_image:  PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
-    is_refine: bool, re_scale: float, re_interpo: float,
+    # is_refine: bool, re_scale: float, re_interpo: float,
     tab_select: str, tab_select2: str, t_name: str, t_length: int, t_width: int, t_height: int, low_vr: bool, 
     url: str, dl_video: str, base_size:int
 ):
@@ -424,10 +427,13 @@ def create_and_save_config_by_gui(
     mask_ch1, mask_target, mask_type1, mask_padding1,
     ip_ch, ip_image, ip_scale, ip_type, ip_image_ratio,
     ad_ch, ad_scale, tl_ch, tl_scale, op_ch, op_scale,
-    dp_ch, dp_scale, la_ch, la_scale,
+    dp_ch, dp_scale, 
+    ip2p_ch, ip2p_scale, sh_ch, sh_scale, mlsd_ch, mlsd_scale,
+    bae_ch, bae_scale, sc_ch, sc_scale, se_ch, se_scale,
+    la_ch, la_scale,
     me_ch, me_scale, i2i_ch, i2i_scale,
     ref_ch, ref_image, ref_attention, ref_gn, ref_weight,
-    is_refine, re_scale, re_interpo,
+    # is_refine, re_scale, re_interpo,
     tab_select, tab_select2, t_name, t_length, t_width, t_height, low_vr, 
     url, dl_video, base_size)
         
@@ -453,10 +459,13 @@ def create_config_by_gui(
     mask_ch1: bool, mask_target: str, mask_type1: str, mask_padding1: int,
     ip_ch: bool, ip_image: PIL.Image.Image, ip_scale: float, ip_type: str,ip_image_ratio:float,
     ad_ch: bool, ad_scale: float, tl_ch:bool, tl_scale:float, op_ch: bool, op_scale: float,
-    dp_ch: bool, dp_scale: float, la_ch: bool, la_scale: float,
+    dp_ch: bool, dp_scale: float, 
+    ip2p_ch: bool, ip2p_scale: float, sh_ch: bool, sh_scale: float, mlsd_ch: bool, mlsd_scale: float,
+    bae_ch: bool, bae_scale: float, sc_ch: bool, sc_scale: float, se_ch: bool, se_scale: float,
+    la_ch: bool, la_scale: float,
     me_ch: bool, me_scale: float, i2i_ch: bool, i2i_scale: float,
     ref_ch: bool, ref_image:  PIL.Image.Image, ref_attention: float, ref_gn: float, ref_weight: float,
-    is_refine: bool, re_scale: float, re_interpo: float,
+    # is_refine: bool, re_scale: float, re_interpo: float,
     tab_select: str, tab_select2: str, t_name: str, t_length: int, t_width: int, t_height: int, low_vr: bool, 
     url: str, dl_video: str, base_size:int
 ) -> ModelConfig:
@@ -514,6 +523,17 @@ def create_config_by_gui(
     print(f"op_scale: {op_scale}")
     print(f"dp_ch: {dp_ch}")
     print(f"dp_scale: {dp_scale}")
+    print(f"ip2p_ch: {ip2p_ch}")
+    print(f"ip2p_scale: {ip2p_scale}")
+    print(f"sh_ch: {sh_ch}")
+    print(f"mlsd_ch: {mlsd_ch}")
+    print(f"mlsd_scale: {mlsd_scale}")
+    print(f"bae_ch: {bae_ch}")
+    print(f"bae_scale: {bae_scale}")
+    print(f"sc_ch: {sc_ch}")
+    print(f"sc_scale: {sc_scale}")
+    print(f"se_ch: {se_ch}")
+    print(f"se_scale: {se_scale}")
     print(f"la_ch: {la_ch}")
     print(f"la_scale: {la_scale}")
     print(f"me_ch: {me_ch}")
@@ -525,9 +545,9 @@ def create_config_by_gui(
     print(f"ref_attention: {ref_attention}")
     print(f"ref_gn: {ref_gn}")
     print(f"ref_weight: {ref_weight}")
-    print(f"is_refine: {is_refine}")
-    print(f"re_scale: {re_scale}")
-    print(f"re_interpo: {re_interpo}")
+    # print(f"is_refine: {is_refine}")
+    # print(f"re_scale: {re_scale}")
+    # print(f"re_interpo: {re_interpo}")
     print(f"tab_select: {tab_select}")
     print(f"tab_select2: {tab_select2}")
     print(f"t_name: {t_name}")
@@ -642,9 +662,9 @@ def create_config_by_gui(
     model_config.mask_target = mask_target
     model_config.mask_type1 = mask_type1
     model_config.mask_padding1 =mask_padding1
-    model_config.refine = is_refine
-    model_config.re_scale = re_scale
-    model_config.re_interpo = re_interpo
+    # model_config.refine = is_refine
+    # model_config.re_scale = re_scale
+    # model_config.re_interpo = re_interpo
     model_config.tab_select = tab_select
     model_config.tab_select2 = tab_select2
     model_config.url = url
@@ -686,6 +706,20 @@ def create_config_by_gui(
     model_config.controlnet_map["controlnet_openpose"]["controlnet_conditioning_scale"] = op_scale
     model_config.controlnet_map["controlnet_depth"]["enable"] = dp_ch
     model_config.controlnet_map["controlnet_depth"]["controlnet_conditioning_scale"] = dp_scale
+
+    model_config.controlnet_map["controlnet_ip2p"]["enable"] = ip2p_ch
+    model_config.controlnet_map["controlnet_ip2p"]["controlnet_conditioning_scale"] = ip2p_scale
+    model_config.controlnet_map["controlnet_shuffle"]["enable"] = sh_ch
+    model_config.controlnet_map["controlnet_shuffle"]["controlnet_conditioning_scale"] = sh_scale
+    model_config.controlnet_map["controlnet_mlsd"]["enable"] = mlsd_ch
+    model_config.controlnet_map["controlnet_mlsd"]["controlnet_conditioning_scale"] = mlsd_scale
+    model_config.controlnet_map["controlnet_normalbae"]["enable"] = bae_ch
+    model_config.controlnet_map["controlnet_normalbae"]["controlnet_conditioning_scale"] = bae_scale
+    model_config.controlnet_map["controlnet_scribble"]["enable"] = sc_ch
+    model_config.controlnet_map["controlnet_scribble"]["controlnet_conditioning_scale"] = sc_scale
+    model_config.controlnet_map["controlnet_softedge"]["enable"] = se_ch
+    model_config.controlnet_map["controlnet_softedge"]["controlnet_conditioning_scale"] = se_scale
+    
     model_config.controlnet_map["controlnet_lineart"]["enable"] = la_ch
     model_config.controlnet_map["controlnet_lineart"]["controlnet_conditioning_scale"] = la_scale
     model_config.controlnet_map["controlnet_mediapipe_face"]["enable"] = me_ch

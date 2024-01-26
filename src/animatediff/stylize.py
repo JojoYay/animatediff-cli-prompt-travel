@@ -273,16 +273,32 @@ def create_config(
 #    if not is_img2img:
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_tile"), dirs_exist_ok=True)
 #    else:
-    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_openpose"), dirs_exist_ok=True)
-    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_lineart_anime"), dirs_exist_ok=True)
-    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_lineart"), dirs_exist_ok=True)
-    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_depth"), dirs_exist_ok=True)
-    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_scribble"), dirs_exist_ok=True)
-    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_normalbae"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["animatediff_controlnet"]["enable"] == True):
     shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("animatediff_controlnet"), dirs_exist_ok=True)
-    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_mediapipe_face"), dirs_exist_ok=True)
-    
-#    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_ip2p"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_ip2p"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_ip2p"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_lineart_anime"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_lineart_anime"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_openpose"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_openpose"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_softedge"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_softedge"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_shuffle"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_shuffle"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_depth"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_depth"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_canny"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_canny"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_lineart"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_lineart"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_mlsd"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_mlsd"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_normalbae"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_normalbae"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_scribble"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_scribble"), dirs_exist_ok=True)
+    # if(model_config.controlnet_map["controlnet_seg"]["enable"] == True):
+    shutil.copytree(img2img_dir, controlnet_img_dir.joinpath("controlnet_seg"), dirs_exist_ok=True)
 
     black_list = []
     if ignore_list.is_file():

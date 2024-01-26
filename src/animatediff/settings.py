@@ -134,9 +134,9 @@ class ModelConfig(BaseSettings):
     mask_target: str = ""
     mask_type1:str = ""
     mask_padding1:int = 0
-    refine:bool = Field(False)
-    re_scale:float = 0.75
-    re_interpo:int = 1
+    # refine:bool = Field(False)
+    # re_scale:float = 0.75
+    # re_interpo:int = 1
     low_vr:bool = Field(False)
     tab_select: str = ""
     tab_select2: str = ""
