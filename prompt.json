@@ -1,6 +1,6 @@
 {
-    "name": "20240126_1121",
-    "path": "sd_models/cardosAnime_v20.safetensors",
+    "name": "20240126_1745",
+    "path": "sd_models/sd/sudachi_v10.safetensors",
     "vae_path": "",
     "motion_module": "motion_modules/sd/mm_sd_v15_v2.safetensors",
     "context_schedule": "uniform",
@@ -23,19 +23,27 @@
     "compile": false,
     "tensor_interpolation_slerp": true,
     "seed": [
-        -1.0
+        7.453605232530864e+18
     ],
     "scheduler": "dpmpp_2m_sde",
-    "steps": 8,
+    "steps": 9,
     "guidance_scale": 1.8,
     "unet_batch_size": 1,
     "clip_skip": 2,
     "prompt_fixed_ratio": 0.5,
-    "head_prompt": "deltamon, 1girl, green short hair, nekomimi, cattail, pink randoseru, cyan eyes, white pocket, cyan dress, yellow charm, cyan legwear",
+    "head_prompt": "deltamon, 1girl, (green hair:1.2),(short hair:1.2), nekomimi, cat tail, cyan eyes, white pocket, cyan dress, yellow charm, triangle charm,  cyan legwear, (white headband:1.3), tareme, cyan tail, (pink boots,:1.2), detailed face,",
     "prompt_map": {
-        "0": "best quality, open eyes",
-        "8": "best quality, close eyes",
-        "16": "best quality, open eyes, smile"
+        "0": " open eyes",
+        "32": "close eyes",
+        "48": " open eyes",
+        "64": "close eyes",
+        "76": " open eyes",
+        "80": "close eyes",
+        "88": " open eyes",
+        "102": "close eyes",
+        "116": " open eyes",
+        "132": "close eyes",
+        "148": " open eyes"
     },
     "tail_prompt": "",
     "n_prompt": [
@@ -48,14 +56,14 @@
                 "0"
             ],
             "scale": {
-                "0": 0.65
+                "0": 0.6
             }
         }
     },
     "motion_lora_map": {},
     "ip_adapter_map": {
         "enable": false,
-        "input_image_dir": "../stylize/__test_stylize__/delta_fps16/00_ipadapter",
+        "input_image_dir": "../stylize/dance00036_fps16/00_ipadapter",
         "prompt_fixed_ratio": 0.8,
         "save_input_image": false,
         "resized_to_square": false,
@@ -67,13 +75,13 @@
     },
     "img2img_map": {
         "enable": false,
-        "init_img_dir": "../stylize/__test_stylize__/delta_fps16/00_img2img",
+        "init_img_dir": "../stylize/dance00036_fps16/00_img2img",
         "save_init_image": false,
         "denoising_strength": 0.7
     },
     "region_map": {},
     "controlnet_map": {
-        "input_image_dir": "../stylize/__test_stylize__/delta_fps16/00_controlnet_image",
+        "input_image_dir": "../stylize/dance00036_fps16/00_controlnet_image",
         "max_samples_on_vram": 0,
         "max_models_on_vram": 0,
         "save_detectmap": true,
@@ -89,7 +97,7 @@
             "control_scale_list": []
         },
         "animatediff_controlnet": {
-            "enable": true,
+            "enable": false,
             "use_preprocessor": true,
             "guess_mode": false,
             "controlnet_conditioning_scale": 0.25,
@@ -249,7 +257,7 @@
         },
         "controlnet_ref": {
             "enable": false,
-            "ref_image": "../stylize/__test_stylize__/delta_fps16/00_refonly/0.png",
+            "ref_image": "../stylize/dance00036_fps16/00_refonly/0.png",
             "attention_auto_machine_weight": 1,
             "gn_auto_machine_weight": 1,
             "style_fidelity": 1,
@@ -300,7 +308,7 @@
     },
     "stylize_config": {
         "original_video": {
-            "path": null,
+            "path": "data/video/dance00036.mp4",
             "aspect_ratio": -1,
             "offset": 0
         },
@@ -335,15 +343,15 @@
         }
     },
     "result": {},
-    "mask_ch1": false,
+    "mask_ch1": true,
     "mask_target": "person",
     "mask_type1": "Original",
     "mask_padding1": 0,
     "low_vr": false,
-    "tab_select": "T2V",
+    "tab_select": "V2V",
     "tab_select2": "Data",
     "url": "https://www.tiktok.com/@ai_hinahina/video/7313863412541361426",
-    "dl_video": "video/dance00001.mp4",
+    "dl_video": "video/dance00036.mp4",
     "ip_type": "plus_face",
     "ip_image": null,
     "base_size": 512
